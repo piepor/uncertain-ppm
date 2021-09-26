@@ -1,0 +1,1418 @@
+-------------------------  RESOURCES  -------------------------
+*** 112 ***
+- A_SUBMITTED-COMPLETE: 0.2864
+- A_PARTLYSUBMITTED-COMPLETE: 0.2864
+- A_PREACCEPTED-COMPLETE: 0.1062
+- W_Completeren aanvraag-SCHEDULE: 0.1062
+- A_DECLINED-COMPLETE: 0.0751
+- W_Afhandelen leads-SCHEDULE: 0.1037
+- A_CANCELLED-COMPLETE: 0.0220
+- O_CANCELLED-COMPLETE: 0.0123
+- W_Beoordelen fraude-SCHEDULE: 0.0015
+- A_ACTIVATED-COMPLETE: 0.0001
+- A_APPROVED-COMPLETE: 0.0001
+- A_REGISTERED-COMPLETE: 0.0001
+- W_Completeren aanvraag-COMPLETE: 0.0000
+*** None ***
+- W_Completeren aanvraag-START: 0.1688
+- W_Nabellen offertes-SCHEDULE: 0.0541
+- W_Completeren aanvraag-COMPLETE: 0.1720
+- W_Nabellen offertes-START: 0.1737
+- W_Nabellen offertes-COMPLETE: 0.1782
+- W_Nabellen incomplete dossiers-START: 0.0539
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0540
+- W_Valideren aanvraag-SCHEDULE: 0.0295
+- W_Afhandelen leads-START: 0.0454
+- W_Afhandelen leads-COMPLETE: 0.0454
+- W_Completeren aanvraag-SCHEDULE: 0.0189
+- W_Valideren aanvraag-START: 0.0024
+- W_Valideren aanvraag-COMPLETE: 0.0024
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0009
+- W_Wijzigen contractgegevens-SCHEDULE: 0.0001
+- W_Beoordelen fraude-SCHEDULE: 0.0002
+*** 10862 ***
+- A_ACCEPTED-COMPLETE: 0.1037
+- O_SELECTED-COMPLETE: 0.1626
+- A_FINALIZED-COMPLETE: 0.1016
+- O_CREATED-COMPLETE: 0.1626
+- O_SENT-COMPLETE: 0.1626
+- O_CANCELLED-COMPLETE: 0.0955
+- A_CANCELLED-COMPLETE: 0.0528
+- A_PREACCEPTED-COMPLETE: 0.0854
+- A_DECLINED-COMPLETE: 0.0711
+- O_DECLINED-COMPLETE: 0.0020
+*** 10913 ***
+- W_Nabellen offertes-START: 0.1286
+- W_Nabellen offertes-COMPLETE: 0.1369
+- W_Nabellen incomplete dossiers-START: 0.1036
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1038
+- W_Completeren aanvraag-START: 0.1041
+- W_Completeren aanvraag-COMPLETE: 0.1061
+- A_DECLINED-COMPLETE: 0.0227
+- A_ACCEPTED-COMPLETE: 0.0243
+- A_FINALIZED-COMPLETE: 0.0244
+- O_SELECTED-COMPLETE: 0.0324
+- O_CREATED-COMPLETE: 0.0324
+- O_SENT-COMPLETE: 0.0324
+- W_Nabellen offertes-SCHEDULE: 0.0311
+- O_CANCELLED-COMPLETE: 0.0153
+- O_DECLINED-COMPLETE: 0.0016
+- A_CANCELLED-COMPLETE: 0.0120
+- W_Afhandelen leads-START: 0.0275
+- W_Afhandelen leads-COMPLETE: 0.0275
+- A_PREACCEPTED-COMPLETE: 0.0113
+- W_Completeren aanvraag-SCHEDULE: 0.0113
+- W_Valideren aanvraag-SCHEDULE: 0.0054
+- W_Valideren aanvraag-START: 0.0019
+- W_Valideren aanvraag-COMPLETE: 0.0019
+- O_SENT_BACK-COMPLETE: 0.0001
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0013
+*** 11049 ***
+- W_Nabellen offertes-START: 0.1608
+- O_SENT_BACK-COMPLETE: 0.1577
+- W_Valideren aanvraag-SCHEDULE: 0.2218
+- W_Nabellen offertes-COMPLETE: 0.1610
+- W_Nabellen incomplete dossiers-START: 0.1301
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1301
+- O_CANCELLED-COMPLETE: 0.0044
+- A_CANCELLED-COMPLETE: 0.0039
+- A_DECLINED-COMPLETE: 0.0004
+- O_DECLINED-COMPLETE: 0.0004
+- W_Valideren aanvraag-START: 0.0079
+- W_Valideren aanvraag-COMPLETE: 0.0079
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0015
+- W_Completeren aanvraag-START: 0.0028
+- W_Completeren aanvraag-COMPLETE: 0.0029
+- O_SELECTED-COMPLETE: 0.0018
+- O_CREATED-COMPLETE: 0.0018
+- O_SENT-COMPLETE: 0.0018
+- W_Nabellen offertes-SCHEDULE: 0.0009
+*** 10629 ***
+- W_Valideren aanvraag-START: 0.1994
+- A_REGISTERED-COMPLETE: 0.0722
+- A_APPROVED-COMPLETE: 0.0722
+- O_ACCEPTED-COMPLETE: 0.0722
+- A_ACTIVATED-COMPLETE: 0.0722
+- W_Valideren aanvraag-COMPLETE: 0.1996
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0665
+- W_Nabellen incomplete dossiers-START: 0.0247
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0251
+- A_DECLINED-COMPLETE: 0.0239
+- O_DECLINED-COMPLETE: 0.0181
+- W_Completeren aanvraag-START: 0.0074
+- A_ACCEPTED-COMPLETE: 0.0056
+- O_SELECTED-COMPLETE: 0.0096
+- A_FINALIZED-COMPLETE: 0.0054
+- O_CREATED-COMPLETE: 0.0096
+- O_SENT-COMPLETE: 0.0096
+- W_Nabellen offertes-SCHEDULE: 0.0054
+- W_Completeren aanvraag-COMPLETE: 0.0074
+- W_Nabellen offertes-START: 0.0088
+- O_SENT_BACK-COMPLETE: 0.0084
+- W_Valideren aanvraag-SCHEDULE: 0.0088
+- W_Nabellen offertes-COMPLETE: 0.0088
+- W_Afhandelen leads-START: 0.0167
+- W_Afhandelen leads-COMPLETE: 0.0167
+- A_PREACCEPTED-COMPLETE: 0.0086
+- W_Completeren aanvraag-SCHEDULE: 0.0086
+- W_Beoordelen fraude-SCHEDULE: 0.0034
+- O_CANCELLED-COMPLETE: 0.0044
+- A_CANCELLED-COMPLETE: 0.0002
+*** 11120 ***
+- O_SELECTED-COMPLETE: 0.1376
+- O_CANCELLED-COMPLETE: 0.0468
+- O_CREATED-COMPLETE: 0.1376
+- O_SENT-COMPLETE: 0.1376
+- A_DECLINED-COMPLETE: 0.1589
+- A_ACCEPTED-COMPLETE: 0.1234
+- A_FINALIZED-COMPLETE: 0.1177
+- A_CANCELLED-COMPLETE: 0.0397
+- A_PREACCEPTED-COMPLETE: 0.1007
+*** 10809 ***
+- W_Valideren aanvraag-START: 0.2268
+- W_Valideren aanvraag-COMPLETE: 0.2268
+- O_ACCEPTED-COMPLETE: 0.0622
+- A_APPROVED-COMPLETE: 0.0622
+- A_REGISTERED-COMPLETE: 0.0622
+- A_ACTIVATED-COMPLETE: 0.0622
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0393
+- W_Completeren aanvraag-START: 0.0046
+- W_Completeren aanvraag-COMPLETE: 0.0051
+- W_Beoordelen fraude-SCHEDULE: 0.0016
+- W_Beoordelen fraude-START: 0.0083
+- W_Beoordelen fraude-COMPLETE: 0.0083
+- A_DECLINED-COMPLETE: 0.0200
+- W_Nabellen incomplete dossiers-START: 0.0629
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0629
+- A_ACCEPTED-COMPLETE: 0.0014
+- O_SELECTED-COMPLETE: 0.0073
+- A_FINALIZED-COMPLETE: 0.0014
+- O_CREATED-COMPLETE: 0.0073
+- O_SENT-COMPLETE: 0.0073
+- W_Nabellen offertes-SCHEDULE: 0.0014
+- W_Nabellen offertes-START: 0.0064
+- O_SENT_BACK-COMPLETE: 0.0034
+- W_Valideren aanvraag-SCHEDULE: 0.0073
+- W_Nabellen offertes-COMPLETE: 0.0067
+- O_DECLINED-COMPLETE: 0.0188
+- W_Afhandelen leads-SCHEDULE: 0.0005
+- W_Afhandelen leads-START: 0.0041
+- W_Afhandelen leads-COMPLETE: 0.0041
+- O_CANCELLED-COMPLETE: 0.0060
+- A_CANCELLED-COMPLETE: 0.0002
+- A_PREACCEPTED-COMPLETE: 0.0005
+- W_Completeren aanvraag-SCHEDULE: 0.0005
+*** 10912 ***
+- W_Completeren aanvraag-START: 0.1515
+- W_Completeren aanvraag-COMPLETE: 0.1531
+- W_Nabellen offertes-START: 0.0650
+- W_Nabellen offertes-COMPLETE: 0.0662
+- W_Wijzigen contractgegevens-SCHEDULE: 0.0004
+- A_CANCELLED-COMPLETE: 0.0096
+- W_Afhandelen leads-START: 0.0315
+- A_PREACCEPTED-COMPLETE: 0.0148
+- W_Completeren aanvraag-SCHEDULE: 0.0148
+- W_Afhandelen leads-COMPLETE: 0.0315
+- A_ACCEPTED-COMPLETE: 0.0486
+- O_SELECTED-COMPLETE: 0.0590
+- A_FINALIZED-COMPLETE: 0.0482
+- O_CREATED-COMPLETE: 0.0590
+- O_SENT-COMPLETE: 0.0590
+- W_Nabellen offertes-SCHEDULE: 0.0582
+- W_Nabellen incomplete dossiers-START: 0.0411
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0411
+- O_CANCELLED-COMPLETE: 0.0163
+- W_Valideren aanvraag-START: 0.0032
+- W_Valideren aanvraag-COMPLETE: 0.0032
+- W_Valideren aanvraag-SCHEDULE: 0.0024
+- A_DECLINED-COMPLETE: 0.0207
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0008
+- O_DECLINED-COMPLETE: 0.0008
+*** 11201 ***
+- W_Completeren aanvraag-START: 0.1993
+- W_Completeren aanvraag-COMPLETE: 0.2012
+- A_ACCEPTED-COMPLETE: 0.0300
+- A_FINALIZED-COMPLETE: 0.0290
+- O_SELECTED-COMPLETE: 0.0397
+- O_CREATED-COMPLETE: 0.0397
+- O_SENT-COMPLETE: 0.0397
+- W_Nabellen offertes-SCHEDULE: 0.0390
+- W_Nabellen offertes-START: 0.1394
+- O_CANCELLED-COMPLETE: 0.0173
+- W_Nabellen offertes-COMPLETE: 0.1421
+- A_DECLINED-COMPLETE: 0.0117
+- A_CANCELLED-COMPLETE: 0.0120
+- W_Afhandelen leads-START: 0.0082
+- W_Afhandelen leads-COMPLETE: 0.0082
+- A_PREACCEPTED-COMPLETE: 0.0027
+- W_Completeren aanvraag-SCHEDULE: 0.0027
+- W_Nabellen incomplete dossiers-START: 0.0180
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0180
+- O_DECLINED-COMPLETE: 0.0007
+- W_Valideren aanvraag-SCHEDULE: 0.0003
+- W_Valideren aanvraag-START: 0.0002
+- W_Valideren aanvraag-COMPLETE: 0.0002
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0007
+*** 11119 ***
+- W_Nabellen offertes-START: 0.1701
+- W_Nabellen offertes-COMPLETE: 0.1725
+- W_Completeren aanvraag-START: 0.1412
+- A_ACCEPTED-COMPLETE: 0.0274
+- A_FINALIZED-COMPLETE: 0.0274
+- O_SELECTED-COMPLETE: 0.0380
+- O_CREATED-COMPLETE: 0.0380
+- O_SENT-COMPLETE: 0.0380
+- W_Nabellen offertes-SCHEDULE: 0.0375
+- W_Completeren aanvraag-COMPLETE: 0.1426
+- O_CANCELLED-COMPLETE: 0.0212
+- A_CANCELLED-COMPLETE: 0.0145
+- W_Nabellen incomplete dossiers-START: 0.0231
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0232
+- W_Afhandelen leads-START: 0.0222
+- A_PREACCEPTED-COMPLETE: 0.0103
+- W_Completeren aanvraag-SCHEDULE: 0.0103
+- W_Afhandelen leads-COMPLETE: 0.0222
+- A_DECLINED-COMPLETE: 0.0164
+- W_Valideren aanvraag-SCHEDULE: 0.0016
+- W_Valideren aanvraag-START: 0.0007
+- W_Valideren aanvraag-COMPLETE: 0.0007
+- O_DECLINED-COMPLETE: 0.0003
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0004
+*** 10861 ***
+- W_Nabellen offertes-START: 0.1235
+- O_SELECTED-COMPLETE: 0.0366
+- O_CANCELLED-COMPLETE: 0.0161
+- O_CREATED-COMPLETE: 0.0366
+- O_SENT-COMPLETE: 0.0366
+- W_Nabellen offertes-SCHEDULE: 0.0355
+- W_Nabellen offertes-COMPLETE: 0.1334
+- W_Nabellen incomplete dossiers-START: 0.0354
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0354
+- W_Valideren aanvraag-SCHEDULE: 0.0034
+- A_CANCELLED-COMPLETE: 0.0115
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0011
+- W_Completeren aanvraag-START: 0.1674
+- W_Completeren aanvraag-COMPLETE: 0.1743
+- A_ACCEPTED-COMPLETE: 0.0268
+- A_FINALIZED-COMPLETE: 0.0271
+- W_Valideren aanvraag-START: 0.0039
+- W_Valideren aanvraag-COMPLETE: 0.0039
+- A_DECLINED-COMPLETE: 0.0186
+- W_Afhandelen leads-START: 0.0260
+- A_PREACCEPTED-COMPLETE: 0.0102
+- W_Completeren aanvraag-SCHEDULE: 0.0102
+- W_Afhandelen leads-COMPLETE: 0.0260
+- O_DECLINED-COMPLETE: 0.0005
+*** 11203 ***
+- W_Nabellen offertes-START: 0.1595
+- W_Nabellen offertes-COMPLETE: 0.1652
+- W_Completeren aanvraag-START: 0.1876
+- W_Completeren aanvraag-COMPLETE: 0.1892
+- A_ACCEPTED-COMPLETE: 0.0245
+- O_SELECTED-COMPLETE: 0.0299
+- A_FINALIZED-COMPLETE: 0.0230
+- O_CREATED-COMPLETE: 0.0299
+- O_SENT-COMPLETE: 0.0299
+- W_Nabellen offertes-SCHEDULE: 0.0294
+- O_CANCELLED-COMPLETE: 0.0199
+- A_CANCELLED-COMPLETE: 0.0172
+- W_Nabellen incomplete dossiers-START: 0.0091
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0091
+- W_Afhandelen leads-START: 0.0227
+- W_Afhandelen leads-COMPLETE: 0.0227
+- W_Wijzigen contractgegevens-SCHEDULE: 0.0006
+- A_DECLINED-COMPLETE: 0.0124
+- A_PREACCEPTED-COMPLETE: 0.0087
+- W_Completeren aanvraag-SCHEDULE: 0.0087
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0005
+- W_Valideren aanvraag-START: 0.0002
+- W_Valideren aanvraag-COMPLETE: 0.0002
+*** 11181 ***
+- W_Nabellen offertes-START: 0.1552
+- W_Nabellen offertes-COMPLETE: 0.1579
+- W_Completeren aanvraag-START: 0.1565
+- W_Completeren aanvraag-COMPLETE: 0.1591
+- A_CANCELLED-COMPLETE: 0.0126
+- O_CANCELLED-COMPLETE: 0.0193
+- A_ACCEPTED-COMPLETE: 0.0204
+- O_SELECTED-COMPLETE: 0.0294
+- A_FINALIZED-COMPLETE: 0.0204
+- O_CREATED-COMPLETE: 0.0294
+- O_SENT-COMPLETE: 0.0294
+- W_Nabellen offertes-SCHEDULE: 0.0282
+- A_DECLINED-COMPLETE: 0.0110
+- W_Afhandelen leads-START: 0.0107
+- W_Afhandelen leads-COMPLETE: 0.0107
+- A_PREACCEPTED-COMPLETE: 0.0033
+- W_Completeren aanvraag-SCHEDULE: 0.0033
+- W_Nabellen incomplete dossiers-START: 0.0670
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0670
+- W_Valideren aanvraag-SCHEDULE: 0.0032
+- W_Valideren aanvraag-START: 0.0016
+- W_Valideren aanvraag-COMPLETE: 0.0016
+- O_DECLINED-COMPLETE: 0.0013
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0013
+- O_SENT_BACK-COMPLETE: 0.0001
+*** 11189 ***
+- W_Nabellen offertes-START: 0.1155
+- W_Nabellen offertes-COMPLETE: 0.1163
+- W_Completeren aanvraag-START: 0.1412
+- W_Completeren aanvraag-COMPLETE: 0.1419
+- W_Nabellen incomplete dossiers-START: 0.0446
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0446
+- A_ACCEPTED-COMPLETE: 0.0400
+- O_SELECTED-COMPLETE: 0.0475
+- A_FINALIZED-COMPLETE: 0.0397
+- O_CREATED-COMPLETE: 0.0475
+- O_SENT-COMPLETE: 0.0475
+- W_Nabellen offertes-SCHEDULE: 0.0469
+- W_Valideren aanvraag-SCHEDULE: 0.0028
+- A_DECLINED-COMPLETE: 0.0254
+- O_CANCELLED-COMPLETE: 0.0136
+- W_Afhandelen leads-START: 0.0270
+- A_PREACCEPTED-COMPLETE: 0.0105
+- W_Completeren aanvraag-SCHEDULE: 0.0105
+- W_Afhandelen leads-COMPLETE: 0.0271
+- A_CANCELLED-COMPLETE: 0.0083
+- O_DECLINED-COMPLETE: 0.0006
+- W_Valideren aanvraag-START: 0.0003
+- W_Valideren aanvraag-COMPLETE: 0.0003
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0006
+*** 10609 ***
+- W_Valideren aanvraag-START: 0.2383
+- O_ACCEPTED-COMPLETE: 0.0475
+- A_APPROVED-COMPLETE: 0.0475
+- A_REGISTERED-COMPLETE: 0.0475
+- A_ACTIVATED-COMPLETE: 0.0475
+- W_Valideren aanvraag-COMPLETE: 0.2382
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0870
+- A_DECLINED-COMPLETE: 0.0292
+- O_DECLINED-COMPLETE: 0.0288
+- W_Nabellen offertes-START: 0.0133
+- W_Nabellen offertes-COMPLETE: 0.0142
+- W_Nabellen incomplete dossiers-START: 0.0481
+- W_Valideren aanvraag-SCHEDULE: 0.0115
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0481
+- O_CANCELLED-COMPLETE: 0.0061
+- O_SELECTED-COMPLETE: 0.0070
+- O_CREATED-COMPLETE: 0.0070
+- O_SENT-COMPLETE: 0.0070
+- W_Afhandelen leads-START: 0.0026
+- A_PREACCEPTED-COMPLETE: 0.0006
+- W_Completeren aanvraag-SCHEDULE: 0.0006
+- W_Afhandelen leads-COMPLETE: 0.0026
+- W_Completeren aanvraag-START: 0.0030
+- A_ACCEPTED-COMPLETE: 0.0016
+- A_FINALIZED-COMPLETE: 0.0016
+- W_Nabellen offertes-SCHEDULE: 0.0017
+- W_Completeren aanvraag-COMPLETE: 0.0030
+- O_SENT_BACK-COMPLETE: 0.0081
+- W_Beoordelen fraude-SCHEDULE: 0.0004
+- A_CANCELLED-COMPLETE: 0.0007
+*** 11111 ***
+- A_DECLINED-COMPLETE: 0.2308
+- A_ACCEPTED-COMPLETE: 0.0769
+- O_SELECTED-COMPLETE: 0.1026
+- A_FINALIZED-COMPLETE: 0.0769
+- O_CREATED-COMPLETE: 0.1026
+- O_SENT-COMPLETE: 0.1026
+- O_DECLINED-COMPLETE: 0.0256
+- O_CANCELLED-COMPLETE: 0.0256
+- A_PREACCEPTED-COMPLETE: 0.2564
+*** 10982 ***
+- W_Completeren aanvraag-START: 0.1241
+- W_Completeren aanvraag-COMPLETE: 0.1291
+- W_Nabellen offertes-START: 0.1004
+- O_SELECTED-COMPLETE: 0.0411
+- O_CANCELLED-COMPLETE: 0.0149
+- O_CREATED-COMPLETE: 0.0411
+- O_SENT-COMPLETE: 0.0411
+- W_Nabellen offertes-SCHEDULE: 0.0401
+- W_Nabellen offertes-COMPLETE: 0.1034
+- W_Nabellen incomplete dossiers-START: 0.0584
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0584
+- A_ACCEPTED-COMPLETE: 0.0306
+- A_FINALIZED-COMPLETE: 0.0304
+- W_Afhandelen leads-START: 0.0474
+- A_PREACCEPTED-COMPLETE: 0.0247
+- W_Completeren aanvraag-SCHEDULE: 0.0247
+- W_Afhandelen leads-COMPLETE: 0.0474
+- A_DECLINED-COMPLETE: 0.0222
+- W_Valideren aanvraag-START: 0.0028
+- W_Valideren aanvraag-COMPLETE: 0.0028
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0010
+- A_CANCELLED-COMPLETE: 0.0097
+- W_Valideren aanvraag-SCHEDULE: 0.0030
+- O_DECLINED-COMPLETE: 0.0010
+- O_SENT_BACK-COMPLETE: 0.0003
+*** 11019 ***
+- W_Completeren aanvraag-START: 0.2501
+- W_Completeren aanvraag-COMPLETE: 0.2540
+- W_Nabellen incomplete dossiers-START: 0.0397
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0397
+- A_ACCEPTED-COMPLETE: 0.0440
+- A_FINALIZED-COMPLETE: 0.0423
+- O_SELECTED-COMPLETE: 0.0479
+- O_CREATED-COMPLETE: 0.0479
+- O_SENT-COMPLETE: 0.0479
+- W_Nabellen offertes-SCHEDULE: 0.0461
+- W_Nabellen offertes-START: 0.0280
+- O_CANCELLED-COMPLETE: 0.0095
+- W_Nabellen offertes-COMPLETE: 0.0285
+- A_CANCELLED-COMPLETE: 0.0129
+- W_Valideren aanvraag-SCHEDULE: 0.0022
+- W_Wijzigen contractgegevens-SCHEDULE: 0.0013
+- A_DECLINED-COMPLETE: 0.0185
+- O_DECLINED-COMPLETE: 0.0009
+- W_Valideren aanvraag-START: 0.0004
+- W_Valideren aanvraag-COMPLETE: 0.0004
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0017
+- W_Afhandelen leads-START: 0.0129
+- A_PREACCEPTED-COMPLETE: 0.0052
+- W_Completeren aanvraag-SCHEDULE: 0.0052
+- W_Afhandelen leads-COMPLETE: 0.0129
+*** 11180 ***
+- W_Completeren aanvraag-START: 0.1579
+- W_Completeren aanvraag-COMPLETE: 0.1623
+- A_CANCELLED-COMPLETE: 0.0140
+- W_Nabellen offertes-START: 0.1759
+- W_Nabellen offertes-COMPLETE: 0.1812
+- A_DECLINED-COMPLETE: 0.0105
+- A_ACCEPTED-COMPLETE: 0.0238
+- O_SELECTED-COMPLETE: 0.0347
+- A_FINALIZED-COMPLETE: 0.0233
+- O_CREATED-COMPLETE: 0.0347
+- O_SENT-COMPLETE: 0.0347
+- W_Nabellen offertes-SCHEDULE: 0.0342
+- O_CANCELLED-COMPLETE: 0.0195
+- W_Nabellen incomplete dossiers-START: 0.0255
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0255
+- W_Afhandelen leads-START: 0.0112
+- W_Afhandelen leads-COMPLETE: 0.0112
+- A_PREACCEPTED-COMPLETE: 0.0059
+- W_Completeren aanvraag-SCHEDULE: 0.0059
+- W_Valideren aanvraag-SCHEDULE: 0.0030
+- W_Valideren aanvraag-START: 0.0021
+- W_Valideren aanvraag-COMPLETE: 0.0021
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0004
+- O_DECLINED-COMPLETE: 0.0004
+- O_SENT_BACK-COMPLETE: 0.0001
+*** 10899 ***
+- W_Nabellen offertes-START: 0.1804
+- O_SENT_BACK-COMPLETE: 0.1890
+- W_Valideren aanvraag-SCHEDULE: 0.2519
+- W_Nabellen offertes-COMPLETE: 0.1804
+- W_Nabellen incomplete dossiers-START: 0.0872
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0872
+- W_Valideren aanvraag-START: 0.0073
+- W_Valideren aanvraag-COMPLETE: 0.0073
+- W_Completeren aanvraag-START: 0.0011
+- W_Completeren aanvraag-COMPLETE: 0.0011
+- O_CANCELLED-COMPLETE: 0.0020
+- A_CANCELLED-COMPLETE: 0.0020
+- W_Afhandelen leads-START: 0.0002
+- W_Afhandelen leads-COMPLETE: 0.0002
+- O_SELECTED-COMPLETE: 0.0005
+- O_CREATED-COMPLETE: 0.0005
+- O_SENT-COMPLETE: 0.0005
+- W_Nabellen offertes-SCHEDULE: 0.0002
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0009
+*** 10138 ***
+- W_Valideren aanvraag-START: 0.2218
+- A_DECLINED-COMPLETE: 0.0203
+- O_DECLINED-COMPLETE: 0.0202
+- W_Valideren aanvraag-COMPLETE: 0.2221
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0659
+- O_ACCEPTED-COMPLETE: 0.0886
+- A_REGISTERED-COMPLETE: 0.0886
+- A_ACTIVATED-COMPLETE: 0.0886
+- A_APPROVED-COMPLETE: 0.0886
+- O_SELECTED-COMPLETE: 0.0083
+- O_CANCELLED-COMPLETE: 0.0079
+- O_CREATED-COMPLETE: 0.0083
+- O_SENT-COMPLETE: 0.0083
+- W_Nabellen incomplete dossiers-START: 0.0198
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0198
+- O_SENT_BACK-COMPLETE: 0.0033
+- W_Valideren aanvraag-SCHEDULE: 0.0038
+- W_Nabellen offertes-START: 0.0036
+- W_Nabellen offertes-COMPLETE: 0.0036
+- W_Afhandelen leads-START: 0.0005
+- A_PREACCEPTED-COMPLETE: 0.0004
+- W_Completeren aanvraag-SCHEDULE: 0.0004
+- W_Afhandelen leads-COMPLETE: 0.0005
+- W_Completeren aanvraag-START: 0.0016
+- A_ACCEPTED-COMPLETE: 0.0010
+- A_FINALIZED-COMPLETE: 0.0010
+- W_Nabellen offertes-SCHEDULE: 0.0010
+- W_Completeren aanvraag-COMPLETE: 0.0016
+- A_CANCELLED-COMPLETE: 0.0007
+*** 11002 ***
+- W_Nabellen offertes-START: 0.1015
+- W_Nabellen offertes-COMPLETE: 0.1040
+- W_Nabellen incomplete dossiers-START: 0.1720
+- W_Valideren aanvraag-SCHEDULE: 0.0112
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1720
+- O_CANCELLED-COMPLETE: 0.0173
+- O_SELECTED-COMPLETE: 0.0350
+- O_CREATED-COMPLETE: 0.0350
+- O_SENT-COMPLETE: 0.0350
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0030
+- W_Nabellen offertes-SCHEDULE: 0.0320
+- W_Completeren aanvraag-START: 0.0954
+- A_ACCEPTED-COMPLETE: 0.0228
+- A_FINALIZED-COMPLETE: 0.0218
+- W_Completeren aanvraag-COMPLETE: 0.0974
+- A_CANCELLED-COMPLETE: 0.0056
+- A_DECLINED-COMPLETE: 0.0117
+- W_Afhandelen leads-START: 0.0091
+- W_Afhandelen leads-COMPLETE: 0.0091
+- A_PREACCEPTED-COMPLETE: 0.0036
+- W_Completeren aanvraag-SCHEDULE: 0.0036
+- O_DECLINED-COMPLETE: 0.0010
+- W_Valideren aanvraag-START: 0.0005
+- W_Valideren aanvraag-COMPLETE: 0.0005
+*** 11122 ***
+- W_Nabellen incomplete dossiers-START: 0.0417
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0417
+- W_Completeren aanvraag-START: 0.1327
+- W_Completeren aanvraag-COMPLETE: 0.1338
+- A_ACCEPTED-COMPLETE: 0.0419
+- O_SELECTED-COMPLETE: 0.0538
+- A_FINALIZED-COMPLETE: 0.0395
+- O_CREATED-COMPLETE: 0.0538
+- O_SENT-COMPLETE: 0.0538
+- W_Nabellen offertes-SCHEDULE: 0.0524
+- W_Nabellen offertes-START: 0.1089
+- W_Nabellen offertes-COMPLETE: 0.1095
+- W_Valideren aanvraag-SCHEDULE: 0.0047
+- A_DECLINED-COMPLETE: 0.0166
+- O_CANCELLED-COMPLETE: 0.0170
+- W_Afhandelen leads-START: 0.0311
+- A_PREACCEPTED-COMPLETE: 0.0125
+- W_Completeren aanvraag-SCHEDULE: 0.0125
+- W_Afhandelen leads-COMPLETE: 0.0311
+- A_CANCELLED-COMPLETE: 0.0055
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0016
+- W_Valideren aanvraag-START: 0.0018
+- W_Valideren aanvraag-COMPLETE: 0.0018
+- O_SENT_BACK-COMPLETE: 0.0002
+*** 10889 ***
+- W_Nabellen incomplete dossiers-START: 0.0290
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0290
+- W_Completeren aanvraag-START: 0.0829
+- A_DECLINED-COMPLETE: 0.0321
+- W_Completeren aanvraag-COMPLETE: 0.0838
+- W_Afhandelen leads-START: 0.0605
+- A_PREACCEPTED-COMPLETE: 0.0267
+- W_Completeren aanvraag-SCHEDULE: 0.0267
+- W_Afhandelen leads-COMPLETE: 0.0605
+- W_Nabellen offertes-START: 0.1352
+- W_Nabellen offertes-COMPLETE: 0.1383
+- A_ACCEPTED-COMPLETE: 0.0284
+- A_FINALIZED-COMPLETE: 0.0290
+- O_SELECTED-COMPLETE: 0.0482
+- O_CREATED-COMPLETE: 0.0482
+- O_SENT-COMPLETE: 0.0482
+- W_Nabellen offertes-SCHEDULE: 0.0471
+- O_CANCELLED-COMPLETE: 0.0273
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0011
+- O_SENT_BACK-COMPLETE: 0.0003
+- W_Valideren aanvraag-SCHEDULE: 0.0023
+- A_CANCELLED-COMPLETE: 0.0095
+- W_Valideren aanvraag-START: 0.0020
+- W_Valideren aanvraag-COMPLETE: 0.0020
+- O_DECLINED-COMPLETE: 0.0017
+*** 10972 ***
+- W_Valideren aanvraag-START: 0.2239
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0663
+- W_Valideren aanvraag-COMPLETE: 0.2237
+- O_ACCEPTED-COMPLETE: 0.0820
+- A_APPROVED-COMPLETE: 0.0820
+- A_REGISTERED-COMPLETE: 0.0820
+- A_ACTIVATED-COMPLETE: 0.0820
+- W_Nabellen incomplete dossiers-START: 0.0272
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0271
+- O_SELECTED-COMPLETE: 0.0098
+- O_CANCELLED-COMPLETE: 0.0090
+- O_CREATED-COMPLETE: 0.0098
+- O_SENT-COMPLETE: 0.0098
+- A_DECLINED-COMPLETE: 0.0168
+- O_DECLINED-COMPLETE: 0.0168
+- A_CANCELLED-COMPLETE: 0.0005
+- W_Nabellen offertes-START: 0.0052
+- O_SENT_BACK-COMPLETE: 0.0051
+- W_Valideren aanvraag-SCHEDULE: 0.0057
+- W_Nabellen offertes-COMPLETE: 0.0052
+- W_Completeren aanvraag-START: 0.0013
+- A_ACCEPTED-COMPLETE: 0.0013
+- A_FINALIZED-COMPLETE: 0.0013
+- W_Nabellen offertes-SCHEDULE: 0.0013
+- W_Completeren aanvraag-COMPLETE: 0.0013
+- W_Afhandelen leads-START: 0.0011
+- A_PREACCEPTED-COMPLETE: 0.0005
+- W_Completeren aanvraag-SCHEDULE: 0.0005
+- W_Afhandelen leads-COMPLETE: 0.0011
+- W_Beoordelen fraude-SCHEDULE: 0.0005
+*** 11121 ***
+- W_Nabellen incomplete dossiers-START: 0.0964
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0964
+- W_Completeren aanvraag-START: 0.1534
+- W_Completeren aanvraag-COMPLETE: 0.1558
+- A_DECLINED-COMPLETE: 0.0156
+- W_Nabellen offertes-START: 0.0767
+- O_CANCELLED-COMPLETE: 0.0187
+- O_SELECTED-COMPLETE: 0.0407
+- O_CREATED-COMPLETE: 0.0407
+- O_SENT-COMPLETE: 0.0407
+- W_Nabellen offertes-SCHEDULE: 0.0395
+- W_Nabellen offertes-COMPLETE: 0.0791
+- A_CANCELLED-COMPLETE: 0.0074
+- A_ACCEPTED-COMPLETE: 0.0266
+- A_FINALIZED-COMPLETE: 0.0261
+- W_Valideren aanvraag-SCHEDULE: 0.0065
+- W_Afhandelen leads-START: 0.0259
+- W_Afhandelen leads-COMPLETE: 0.0259
+- A_PREACCEPTED-COMPLETE: 0.0117
+- W_Completeren aanvraag-SCHEDULE: 0.0117
+- O_SENT_BACK-COMPLETE: 0.0005
+- W_Valideren aanvraag-START: 0.0012
+- W_Valideren aanvraag-COMPLETE: 0.0012
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0012
+- O_DECLINED-COMPLETE: 0.0002
+*** 10939 ***
+- W_Completeren aanvraag-START: 0.1408
+- A_ACCEPTED-COMPLETE: 0.0376
+- O_SELECTED-COMPLETE: 0.0449
+- A_FINALIZED-COMPLETE: 0.0376
+- O_CREATED-COMPLETE: 0.0449
+- O_SENT-COMPLETE: 0.0449
+- W_Nabellen offertes-SCHEDULE: 0.0434
+- W_Completeren aanvraag-COMPLETE: 0.1433
+- W_Nabellen offertes-START: 0.0822
+- W_Nabellen offertes-COMPLETE: 0.0851
+- W_Afhandelen leads-START: 0.0557
+- A_PREACCEPTED-COMPLETE: 0.0264
+- W_Completeren aanvraag-SCHEDULE: 0.0264
+- W_Afhandelen leads-COMPLETE: 0.0557
+- A_DECLINED-COMPLETE: 0.0282
+- W_Nabellen incomplete dossiers-START: 0.0373
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0373
+- W_Valideren aanvraag-SCHEDULE: 0.0033
+- O_CANCELLED-COMPLETE: 0.0123
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0014
+- A_CANCELLED-COMPLETE: 0.0098
+- W_Valideren aanvraag-START: 0.0007
+- W_Valideren aanvraag-COMPLETE: 0.0007
+*** 11029 ***
+- O_SENT_BACK-COMPLETE: 0.9892
+- O_CANCELLED-COMPLETE: 0.0027
+- A_CANCELLED-COMPLETE: 0.0027
+- A_DECLINED-COMPLETE: 0.0027
+- O_DECLINED-COMPLETE: 0.0027
+*** 11009 ***
+- W_Nabellen incomplete dossiers-START: 0.0733
+- O_DECLINED-COMPLETE: 0.0014
+- A_DECLINED-COMPLETE: 0.0233
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0733
+- O_SELECTED-COMPLETE: 0.0508
+- O_CANCELLED-COMPLETE: 0.0194
+- O_CREATED-COMPLETE: 0.0508
+- O_SENT-COMPLETE: 0.0508
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0022
+- W_Nabellen offertes-START: 0.0894
+- W_Nabellen offertes-SCHEDULE: 0.0489
+- W_Nabellen offertes-COMPLETE: 0.0917
+- W_Afhandelen leads-START: 0.0531
+- W_Afhandelen leads-COMPLETE: 0.0531
+- W_Completeren aanvraag-START: 0.0894
+- A_ACCEPTED-COMPLETE: 0.0350
+- A_FINALIZED-COMPLETE: 0.0336
+- W_Completeren aanvraag-COMPLETE: 0.0903
+- A_PREACCEPTED-COMPLETE: 0.0278
+- W_Completeren aanvraag-SCHEDULE: 0.0278
+- A_CANCELLED-COMPLETE: 0.0069
+- W_Valideren aanvraag-START: 0.0022
+- W_Valideren aanvraag-COMPLETE: 0.0022
+- W_Valideren aanvraag-SCHEDULE: 0.0031
+*** 11000 ***
+- W_Completeren aanvraag-START: 0.1121
+- W_Completeren aanvraag-COMPLETE: 0.1146
+- A_ACCEPTED-COMPLETE: 0.0315
+- O_SELECTED-COMPLETE: 0.0409
+- A_FINALIZED-COMPLETE: 0.0310
+- O_CREATED-COMPLETE: 0.0409
+- O_SENT-COMPLETE: 0.0409
+- W_Nabellen offertes-SCHEDULE: 0.0402
+- W_Nabellen offertes-START: 0.1084
+- W_Nabellen offertes-COMPLETE: 0.1113
+- W_Nabellen incomplete dossiers-START: 0.0970
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0970
+- O_CANCELLED-COMPLETE: 0.0169
+- A_CANCELLED-COMPLETE: 0.0104
+- W_Afhandelen leads-START: 0.0290
+- W_Afhandelen leads-COMPLETE: 0.0290
+- A_PREACCEPTED-COMPLETE: 0.0136
+- W_Completeren aanvraag-SCHEDULE: 0.0136
+- A_DECLINED-COMPLETE: 0.0146
+- W_Valideren aanvraag-SCHEDULE: 0.0055
+- O_DECLINED-COMPLETE: 0.0005
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0007
+- W_Valideren aanvraag-START: 0.0002
+- W_Valideren aanvraag-COMPLETE: 0.0002
+*** 10863 ***
+- W_Nabellen offertes-START: 0.0885
+- W_Nabellen offertes-COMPLETE: 0.0901
+- W_Nabellen incomplete dossiers-START: 0.0398
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0398
+- W_Completeren aanvraag-START: 0.1530
+- A_ACCEPTED-COMPLETE: 0.0279
+- O_SELECTED-COMPLETE: 0.0346
+- A_FINALIZED-COMPLETE: 0.0269
+- O_CREATED-COMPLETE: 0.0346
+- O_SENT-COMPLETE: 0.0346
+- W_Nabellen offertes-SCHEDULE: 0.0343
+- W_Completeren aanvraag-COMPLETE: 0.1549
+- W_Afhandelen leads-START: 0.0638
+- W_Afhandelen leads-COMPLETE: 0.0638
+- A_PREACCEPTED-COMPLETE: 0.0305
+- W_Completeren aanvraag-SCHEDULE: 0.0305
+- A_DECLINED-COMPLETE: 0.0263
+- O_CANCELLED-COMPLETE: 0.0115
+- W_Valideren aanvraag-SCHEDULE: 0.0022
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0003
+- A_CANCELLED-COMPLETE: 0.0090
+- W_Valideren aanvraag-START: 0.0013
+- W_Valideren aanvraag-COMPLETE: 0.0013
+- O_DECLINED-COMPLETE: 0.0003
+*** 11169 ***
+- W_Nabellen incomplete dossiers-START: 0.0843
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0846
+- O_SELECTED-COMPLETE: 0.0451
+- O_CANCELLED-COMPLETE: 0.0116
+- O_CREATED-COMPLETE: 0.0451
+- O_SENT-COMPLETE: 0.0451
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0028
+- W_Completeren aanvraag-START: 0.1367
+- W_Completeren aanvraag-COMPLETE: 0.1380
+- A_ACCEPTED-COMPLETE: 0.0368
+- A_FINALIZED-COMPLETE: 0.0362
+- W_Nabellen offertes-SCHEDULE: 0.0424
+- W_Nabellen offertes-START: 0.0279
+- W_Nabellen offertes-COMPLETE: 0.0277
+- O_DECLINED-COMPLETE: 0.0006
+- A_DECLINED-COMPLETE: 0.0304
+- W_Afhandelen leads-START: 0.0652
+- W_Afhandelen leads-COMPLETE: 0.0652
+- A_CANCELLED-COMPLETE: 0.0081
+- A_PREACCEPTED-COMPLETE: 0.0257
+- W_Completeren aanvraag-SCHEDULE: 0.0258
+- O_SENT_BACK-COMPLETE: 0.0005
+- W_Valideren aanvraag-SCHEDULE: 0.0041
+- W_Valideren aanvraag-START: 0.0049
+- W_Valideren aanvraag-COMPLETE: 0.0049
+- W_Beoordelen fraude-SCHEDULE: 0.0003
+*** 11179 ***
+- W_Completeren aanvraag-START: 0.2375
+- W_Completeren aanvraag-COMPLETE: 0.2430
+- A_ACCEPTED-COMPLETE: 0.0349
+- O_SELECTED-COMPLETE: 0.0398
+- A_FINALIZED-COMPLETE: 0.0329
+- O_CREATED-COMPLETE: 0.0398
+- O_SENT-COMPLETE: 0.0398
+- W_Nabellen offertes-SCHEDULE: 0.0398
+- A_DECLINED-COMPLETE: 0.0162
+- W_Nabellen incomplete dossiers-START: 0.0227
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0227
+- A_CANCELLED-COMPLETE: 0.0137
+- W_Nabellen offertes-START: 0.0735
+- O_CANCELLED-COMPLETE: 0.0125
+- W_Nabellen offertes-COMPLETE: 0.0747
+- W_Beoordelen fraude-SCHEDULE: 0.0007
+- W_Afhandelen leads-START: 0.0194
+- W_Afhandelen leads-COMPLETE: 0.0194
+- A_PREACCEPTED-COMPLETE: 0.0077
+- W_Completeren aanvraag-SCHEDULE: 0.0077
+- W_Valideren aanvraag-SCHEDULE: 0.0007
+- W_Valideren aanvraag-START: 0.0002
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0002
+- W_Valideren aanvraag-COMPLETE: 0.0002
+*** 11001 ***
+- W_Nabellen offertes-START: 0.0306
+- A_DECLINED-COMPLETE: 0.0612
+- O_DECLINED-COMPLETE: 0.0034
+- W_Nabellen offertes-COMPLETE: 0.0306
+- W_Completeren aanvraag-START: 0.1259
+- W_Completeren aanvraag-COMPLETE: 0.1259
+- A_ACCEPTED-COMPLETE: 0.0306
+- A_FINALIZED-COMPLETE: 0.0306
+- O_SELECTED-COMPLETE: 0.0510
+- O_CREATED-COMPLETE: 0.0510
+- O_SENT-COMPLETE: 0.0510
+- W_Nabellen offertes-SCHEDULE: 0.0510
+- W_Afhandelen leads-START: 0.1190
+- W_Afhandelen leads-COMPLETE: 0.1190
+- A_PREACCEPTED-COMPLETE: 0.0442
+- W_Completeren aanvraag-SCHEDULE: 0.0442
+- A_CANCELLED-COMPLETE: 0.0034
+- O_CANCELLED-COMPLETE: 0.0204
+- W_Nabellen incomplete dossiers-START: 0.0034
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0034
+*** 10971 ***
+- A_DECLINED-COMPLETE: 0.0610
+- A_PREACCEPTED-COMPLETE: 0.0902
+- A_ACCEPTED-COMPLETE: 0.1439
+- O_SELECTED-COMPLETE: 0.1634
+- A_FINALIZED-COMPLETE: 0.1415
+- O_CREATED-COMPLETE: 0.1634
+- O_SENT-COMPLETE: 0.1634
+- O_CANCELLED-COMPLETE: 0.0439
+- A_CANCELLED-COMPLETE: 0.0268
+- O_SENT_BACK-COMPLETE: 0.0024
+*** 10228 ***
+- W_Nabellen incomplete dossiers-START: 0.0123
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0123
+- W_Completeren aanvraag-START: 0.1248
+- W_Completeren aanvraag-COMPLETE: 0.1476
+- W_Afhandelen leads-START: 0.1933
+- W_Afhandelen leads-COMPLETE: 0.1933
+- A_PREACCEPTED-COMPLETE: 0.0738
+- W_Completeren aanvraag-SCHEDULE: 0.0738
+- A_DECLINED-COMPLETE: 0.0844
+- W_Nabellen offertes-START: 0.0070
+- W_Nabellen offertes-COMPLETE: 0.0070
+- A_ACCEPTED-COMPLETE: 0.0088
+- O_SELECTED-COMPLETE: 0.0053
+- A_FINALIZED-COMPLETE: 0.0053
+- O_CREATED-COMPLETE: 0.0053
+- O_SENT-COMPLETE: 0.0053
+- W_Nabellen offertes-SCHEDULE: 0.0053
+- W_Valideren aanvraag-START: 0.0105
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0035
+- W_Valideren aanvraag-COMPLETE: 0.0105
+- O_CANCELLED-COMPLETE: 0.0018
+- A_CANCELLED-COMPLETE: 0.0035
+- O_DECLINED-COMPLETE: 0.0018
+- O_SENT_BACK-COMPLETE: 0.0018
+- W_Valideren aanvraag-SCHEDULE: 0.0018
+*** 11202 ***
+- A_ACCEPTED-COMPLETE: 0.1205
+- O_SELECTED-COMPLETE: 0.1765
+- A_FINALIZED-COMPLETE: 0.1188
+- O_CREATED-COMPLETE: 0.1765
+- O_SENT-COMPLETE: 0.1765
+- O_CANCELLED-COMPLETE: 0.0796
+- A_CANCELLED-COMPLETE: 0.0392
+- A_DECLINED-COMPLETE: 0.0629
+- A_PREACCEPTED-COMPLETE: 0.0479
+- O_DECLINED-COMPLETE: 0.0017
+*** 10789 ***
+- W_Nabellen offertes-START: 0.1836
+- O_SENT_BACK-COMPLETE: 0.1836
+- W_Valideren aanvraag-SCHEDULE: 0.2545
+- W_Nabellen offertes-COMPLETE: 0.1836
+- W_Nabellen incomplete dossiers-START: 0.0873
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0873
+- W_Valideren aanvraag-START: 0.0041
+- W_Valideren aanvraag-COMPLETE: 0.0041
+- W_Completeren aanvraag-START: 0.0007
+- W_Completeren aanvraag-COMPLETE: 0.0007
+- O_CANCELLED-COMPLETE: 0.0028
+- O_SELECTED-COMPLETE: 0.0014
+- O_CREATED-COMPLETE: 0.0014
+- O_SENT-COMPLETE: 0.0014
+- W_Nabellen offertes-SCHEDULE: 0.0014
+- A_CANCELLED-COMPLETE: 0.0014
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0007
+*** 10881 ***
+- W_Nabellen offertes-START: 0.1672
+- W_Nabellen offertes-COMPLETE: 0.1768
+- W_Completeren aanvraag-START: 0.0780
+- W_Completeren aanvraag-COMPLETE: 0.0797
+- W_Nabellen incomplete dossiers-START: 0.0618
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0620
+- A_CANCELLED-COMPLETE: 0.0145
+- O_SELECTED-COMPLETE: 0.0346
+- O_CANCELLED-COMPLETE: 0.0245
+- O_CREATED-COMPLETE: 0.0346
+- O_SENT-COMPLETE: 0.0346
+- W_Nabellen offertes-SCHEDULE: 0.0327
+- W_Afhandelen leads-START: 0.0426
+- A_DECLINED-COMPLETE: 0.0276
+- W_Afhandelen leads-COMPLETE: 0.0426
+- A_PREACCEPTED-COMPLETE: 0.0170
+- W_Completeren aanvraag-SCHEDULE: 0.0170
+- A_ACCEPTED-COMPLETE: 0.0206
+- A_FINALIZED-COMPLETE: 0.0203
+- W_Valideren aanvraag-SCHEDULE: 0.0044
+- O_DECLINED-COMPLETE: 0.0010
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0019
+- W_Valideren aanvraag-START: 0.0019
+- W_Valideren aanvraag-COMPLETE: 0.0019
+*** 10909 ***
+- W_Completeren aanvraag-START: 0.1057
+- W_Completeren aanvraag-COMPLETE: 0.1075
+- A_ACCEPTED-COMPLETE: 0.0252
+- A_FINALIZED-COMPLETE: 0.0242
+- O_SELECTED-COMPLETE: 0.0358
+- O_CREATED-COMPLETE: 0.0358
+- O_SENT-COMPLETE: 0.0358
+- W_Nabellen offertes-SCHEDULE: 0.0342
+- W_Nabellen offertes-START: 0.1545
+- W_Nabellen offertes-COMPLETE: 0.1586
+- W_Nabellen incomplete dossiers-START: 0.0659
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0659
+- O_CANCELLED-COMPLETE: 0.0206
+- W_Valideren aanvraag-START: 0.0035
+- W_Valideren aanvraag-COMPLETE: 0.0035
+- A_DECLINED-COMPLETE: 0.0177
+- A_CANCELLED-COMPLETE: 0.0116
+- W_Afhandelen leads-START: 0.0297
+- W_Afhandelen leads-COMPLETE: 0.0297
+- A_PREACCEPTED-COMPLETE: 0.0136
+- W_Completeren aanvraag-SCHEDULE: 0.0136
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0018
+- W_Valideren aanvraag-SCHEDULE: 0.0047
+- O_SENT_BACK-COMPLETE: 0.0003
+- O_DECLINED-COMPLETE: 0.0003
+- W_Beoordelen fraude-SCHEDULE: 0.0003
+*** 10188 ***
+- W_Beoordelen fraude-START: 0.4058
+- W_Beoordelen fraude-COMPLETE: 0.4058
+- A_DECLINED-COMPLETE: 0.1077
+- W_Valideren aanvraag-SCHEDULE: 0.0250
+- W_Afhandelen leads-SCHEDULE: 0.0519
+- W_Completeren aanvraag-SCHEDULE: 0.0038
+*** 10910 ***
+- W_Nabellen incomplete dossiers-START: 0.0568
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0568
+- W_Nabellen offertes-START: 0.0336
+- O_CANCELLED-COMPLETE: 0.0125
+- O_SELECTED-COMPLETE: 0.0457
+- O_CREATED-COMPLETE: 0.0457
+- O_SENT-COMPLETE: 0.0457
+- W_Nabellen offertes-SCHEDULE: 0.0449
+- W_Nabellen offertes-COMPLETE: 0.0338
+- W_Completeren aanvraag-START: 0.1161
+- W_Completeren aanvraag-COMPLETE: 0.1172
+- A_DECLINED-COMPLETE: 0.0510
+- O_DECLINED-COMPLETE: 0.0008
+- A_CANCELLED-COMPLETE: 0.0048
+- W_Valideren aanvraag-SCHEDULE: 0.0036
+- A_ACCEPTED-COMPLETE: 0.0343
+- A_FINALIZED-COMPLETE: 0.0343
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0008
+- W_Afhandelen leads-START: 0.0932
+- A_PREACCEPTED-COMPLETE: 0.0361
+- W_Completeren aanvraag-SCHEDULE: 0.0363
+- W_Afhandelen leads-COMPLETE: 0.0932
+- W_Valideren aanvraag-START: 0.0010
+- W_Valideren aanvraag-COMPLETE: 0.0010
+- O_SENT_BACK-COMPLETE: 0.0002
+- W_Beoordelen fraude-SCHEDULE: 0.0002
+*** 10929 ***
+- W_Nabellen incomplete dossiers-START: 0.1074
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1074
+- O_SELECTED-COMPLETE: 0.0458
+- O_CANCELLED-COMPLETE: 0.0175
+- O_CREATED-COMPLETE: 0.0458
+- O_SENT-COMPLETE: 0.0458
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0033
+- W_Nabellen offertes-START: 0.0810
+- W_Nabellen offertes-COMPLETE: 0.0824
+- A_DECLINED-COMPLETE: 0.0225
+- O_DECLINED-COMPLETE: 0.0006
+- O_SENT_BACK-COMPLETE: 0.0008
+- W_Valideren aanvraag-SCHEDULE: 0.0083
+- A_CANCELLED-COMPLETE: 0.0064
+- W_Completeren aanvraag-START: 0.0938
+- W_Completeren aanvraag-COMPLETE: 0.0943
+- W_Afhandelen leads-START: 0.0424
+- W_Afhandelen leads-COMPLETE: 0.0424
+- A_ACCEPTED-COMPLETE: 0.0327
+- A_FINALIZED-COMPLETE: 0.0308
+- W_Nabellen offertes-SCHEDULE: 0.0424
+- A_PREACCEPTED-COMPLETE: 0.0189
+- W_Completeren aanvraag-SCHEDULE: 0.0189
+- W_Valideren aanvraag-START: 0.0039
+- W_Valideren aanvraag-COMPLETE: 0.0039
+- W_Beoordelen fraude-SCHEDULE: 0.0008
+*** 10931 ***
+- W_Nabellen incomplete dossiers-START: 0.1024
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1024
+- W_Nabellen offertes-START: 0.0455
+- W_Nabellen offertes-COMPLETE: 0.0466
+- W_Valideren aanvraag-SCHEDULE: 0.0028
+- O_CANCELLED-COMPLETE: 0.0159
+- A_CANCELLED-COMPLETE: 0.0057
+- W_Completeren aanvraag-START: 0.0956
+- W_Completeren aanvraag-COMPLETE: 0.0973
+- O_SELECTED-COMPLETE: 0.0563
+- O_CREATED-COMPLETE: 0.0563
+- O_SENT-COMPLETE: 0.0563
+- W_Nabellen offertes-SCHEDULE: 0.0557
+- A_ACCEPTED-COMPLETE: 0.0461
+- A_FINALIZED-COMPLETE: 0.0444
+- W_Afhandelen leads-START: 0.0472
+- A_PREACCEPTED-COMPLETE: 0.0256
+- W_Completeren aanvraag-SCHEDULE: 0.0256
+- W_Afhandelen leads-COMPLETE: 0.0472
+- O_DECLINED-COMPLETE: 0.0028
+- A_DECLINED-COMPLETE: 0.0205
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0006
+- W_Valideren aanvraag-START: 0.0006
+- W_Valideren aanvraag-COMPLETE: 0.0006
+*** 11259 ***
+- W_Nabellen incomplete dossiers-START: 0.0843
+- W_Valideren aanvraag-SCHEDULE: 0.2326
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0843
+- W_Nabellen offertes-START: 0.1925
+- O_SENT_BACK-COMPLETE: 0.1953
+- W_Nabellen offertes-COMPLETE: 0.1925
+- W_Completeren aanvraag-START: 0.0004
+- W_Completeren aanvraag-COMPLETE: 0.0006
+- W_Valideren aanvraag-START: 0.0050
+- W_Valideren aanvraag-COMPLETE: 0.0052
+- W_Afhandelen leads-START: 0.0013
+- W_Afhandelen leads-COMPLETE: 0.0013
+- A_DECLINED-COMPLETE: 0.0002
+- O_DECLINED-COMPLETE: 0.0002
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0015
+- O_CANCELLED-COMPLETE: 0.0009
+- A_CANCELLED-COMPLETE: 0.0004
+- O_SELECTED-COMPLETE: 0.0004
+- O_CREATED-COMPLETE: 0.0004
+- O_SENT-COMPLETE: 0.0004
+*** 11200 ***
+- A_ACCEPTED-COMPLETE: 0.1501
+- O_SELECTED-COMPLETE: 0.1871
+- A_FINALIZED-COMPLETE: 0.1487
+- O_CREATED-COMPLETE: 0.1871
+- O_SENT-COMPLETE: 0.1871
+- A_CANCELLED-COMPLETE: 0.0410
+- O_CANCELLED-COMPLETE: 0.0612
+- A_DECLINED-COMPLETE: 0.0296
+- A_PREACCEPTED-COMPLETE: 0.0061
+- O_DECLINED-COMPLETE: 0.0020
+*** 10779 ***
+- W_Completeren aanvraag-START: 0.1466
+- A_DECLINED-COMPLETE: 0.0259
+- W_Completeren aanvraag-COMPLETE: 0.1466
+- W_Valideren aanvraag-START: 0.0776
+- W_Valideren aanvraag-COMPLETE: 0.0948
+- W_Afhandelen leads-START: 0.0172
+- W_Afhandelen leads-COMPLETE: 0.0172
+- A_ACCEPTED-COMPLETE: 0.0172
+- O_SELECTED-COMPLETE: 0.0259
+- A_FINALIZED-COMPLETE: 0.0172
+- O_CREATED-COMPLETE: 0.0259
+- O_SENT-COMPLETE: 0.0259
+- W_Nabellen offertes-SCHEDULE: 0.0259
+- W_Nabellen offertes-START: 0.0345
+- O_CANCELLED-COMPLETE: 0.0259
+- W_Nabellen offertes-COMPLETE: 0.0345
+- A_CANCELLED-COMPLETE: 0.0948
+- A_APPROVED-COMPLETE: 0.0172
+- O_ACCEPTED-COMPLETE: 0.0172
+- A_REGISTERED-COMPLETE: 0.0172
+- A_ACTIVATED-COMPLETE: 0.0172
+- W_Beoordelen fraude-START: 0.0259
+- W_Valideren aanvraag-SCHEDULE: 0.0259
+- W_Beoordelen fraude-COMPLETE: 0.0259
+*** 10880 ***
+- A_ACCEPTED-COMPLETE: 0.1197
+- O_SELECTED-COMPLETE: 0.1636
+- A_FINALIZED-COMPLETE: 0.1167
+- O_CREATED-COMPLETE: 0.1636
+- O_SENT-COMPLETE: 0.1636
+- O_CANCELLED-COMPLETE: 0.0576
+- A_PREACCEPTED-COMPLETE: 0.0848
+- A_DECLINED-COMPLETE: 0.1091
+- A_CANCELLED-COMPLETE: 0.0212
+*** 10914 ***
+- W_Nabellen offertes-START: 0.1630
+- W_Nabellen offertes-COMPLETE: 0.1655
+- A_CANCELLED-COMPLETE: 0.0195
+- O_CANCELLED-COMPLETE: 0.0268
+- W_Completeren aanvraag-START: 0.0973
+- W_Completeren aanvraag-COMPLETE: 0.0998
+- A_ACCEPTED-COMPLETE: 0.0243
+- A_FINALIZED-COMPLETE: 0.0243
+- O_SELECTED-COMPLETE: 0.0365
+- O_CREATED-COMPLETE: 0.0365
+- O_SENT-COMPLETE: 0.0365
+- W_Nabellen offertes-SCHEDULE: 0.0316
+- W_Nabellen incomplete dossiers-START: 0.0900
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0900
+- A_DECLINED-COMPLETE: 0.0097
+- O_DECLINED-COMPLETE: 0.0024
+- W_Afhandelen leads-START: 0.0097
+- A_PREACCEPTED-COMPLETE: 0.0049
+- W_Completeren aanvraag-SCHEDULE: 0.0049
+- W_Afhandelen leads-COMPLETE: 0.0097
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0049
+- W_Valideren aanvraag-SCHEDULE: 0.0024
+- W_Valideren aanvraag-START: 0.0049
+- W_Valideren aanvraag-COMPLETE: 0.0049
+*** 10859 ***
+- A_PREACCEPTED-COMPLETE: 0.0947
+- A_DECLINED-COMPLETE: 0.1538
+- A_ACCEPTED-COMPLETE: 0.1154
+- A_FINALIZED-COMPLETE: 0.1154
+- O_SELECTED-COMPLETE: 0.1479
+- O_CREATED-COMPLETE: 0.1479
+- O_SENT-COMPLETE: 0.1479
+- A_CANCELLED-COMPLETE: 0.0237
+- O_CANCELLED-COMPLETE: 0.0503
+- O_DECLINED-COMPLETE: 0.0030
+*** 11339 ***
+- W_Beoordelen fraude-START: 0.0122
+- W_Beoordelen fraude-COMPLETE: 0.0122
+- W_Valideren aanvraag-START: 0.1707
+- A_APPROVED-COMPLETE: 0.1098
+- A_ACTIVATED-COMPLETE: 0.1098
+- O_ACCEPTED-COMPLETE: 0.1098
+- A_REGISTERED-COMPLETE: 0.1098
+- W_Valideren aanvraag-COMPLETE: 0.1707
+- A_DECLINED-COMPLETE: 0.0122
+- O_DECLINED-COMPLETE: 0.0122
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0366
+- O_SELECTED-COMPLETE: 0.0122
+- O_CANCELLED-COMPLETE: 0.0122
+- O_CREATED-COMPLETE: 0.0122
+- O_SENT-COMPLETE: 0.0122
+- W_Nabellen incomplete dossiers-START: 0.0244
+- O_SENT_BACK-COMPLETE: 0.0122
+- W_Valideren aanvraag-SCHEDULE: 0.0122
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0244
+- W_Beoordelen fraude-SCHEDULE: 0.0122
+*** 10933 ***
+- W_Completeren aanvraag-START: 0.1904
+- W_Completeren aanvraag-COMPLETE: 0.1931
+- A_CANCELLED-COMPLETE: 0.0108
+- W_Nabellen offertes-START: 0.1190
+- W_Nabellen offertes-COMPLETE: 0.1201
+- O_SELECTED-COMPLETE: 0.0416
+- O_CANCELLED-COMPLETE: 0.0141
+- O_CREATED-COMPLETE: 0.0416
+- O_SENT-COMPLETE: 0.0416
+- W_Nabellen offertes-SCHEDULE: 0.0416
+- A_ACCEPTED-COMPLETE: 0.0324
+- A_FINALIZED-COMPLETE: 0.0314
+- A_DECLINED-COMPLETE: 0.0151
+- W_Afhandelen leads-START: 0.0276
+- A_PREACCEPTED-COMPLETE: 0.0092
+- W_Completeren aanvraag-SCHEDULE: 0.0092
+- W_Afhandelen leads-COMPLETE: 0.0276
+- W_Nabellen incomplete dossiers-START: 0.0162
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0162
+- W_Valideren aanvraag-SCHEDULE: 0.0011
+*** 11079 ***
+- W_Nabellen incomplete dossiers-START: 0.1111
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1111
+- W_Valideren aanvraag-START: 0.0833
+- W_Valideren aanvraag-COMPLETE: 0.0833
+- W_Nabellen offertes-START: 0.0556
+- W_Nabellen offertes-COMPLETE: 0.0556
+- W_Completeren aanvraag-START: 0.1667
+- W_Completeren aanvraag-COMPLETE: 0.2778
+- W_Afhandelen leads-START: 0.0278
+- W_Afhandelen leads-COMPLETE: 0.0278
+*** 10932 ***
+- W_Nabellen incomplete dossiers-START: 0.0652
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0649
+- W_Completeren aanvraag-START: 0.1265
+- W_Completeren aanvraag-COMPLETE: 0.1289
+- W_Nabellen offertes-START: 0.0576
+- W_Nabellen offertes-COMPLETE: 0.0590
+- A_CANCELLED-COMPLETE: 0.0106
+- O_CANCELLED-COMPLETE: 0.0220
+- O_DECLINED-COMPLETE: 0.0005
+- A_DECLINED-COMPLETE: 0.0267
+- O_SELECTED-COMPLETE: 0.0531
+- O_CREATED-COMPLETE: 0.0531
+- O_SENT-COMPLETE: 0.0531
+- W_Nabellen offertes-SCHEDULE: 0.0517
+- W_Valideren aanvraag-START: 0.0031
+- W_Valideren aanvraag-COMPLETE: 0.0031
+- A_ACCEPTED-COMPLETE: 0.0361
+- A_FINALIZED-COMPLETE: 0.0364
+- W_Afhandelen leads-START: 0.0519
+- W_Afhandelen leads-COMPLETE: 0.0519
+- A_PREACCEPTED-COMPLETE: 0.0212
+- W_Completeren aanvraag-SCHEDULE: 0.0212
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0014
+- W_Beoordelen fraude-SCHEDULE: 0.0005
+- W_Valideren aanvraag-SCHEDULE: 0.0002
+*** 10935 ***
+- W_Nabellen offertes-START: 0.1282
+- W_Nabellen offertes-COMPLETE: 0.1332
+- O_SELECTED-COMPLETE: 0.0338
+- O_CANCELLED-COMPLETE: 0.0268
+- O_CREATED-COMPLETE: 0.0338
+- O_SENT-COMPLETE: 0.0338
+- W_Nabellen offertes-SCHEDULE: 0.0308
+- W_Nabellen incomplete dossiers-START: 0.1143
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1143
+- W_Valideren aanvraag-START: 0.0060
+- W_Valideren aanvraag-COMPLETE: 0.0060
+- W_Afhandelen leads-START: 0.0696
+- A_PREACCEPTED-COMPLETE: 0.0368
+- W_Completeren aanvraag-SCHEDULE: 0.0368
+- W_Afhandelen leads-COMPLETE: 0.0696
+- A_DECLINED-COMPLETE: 0.0249
+- W_Completeren aanvraag-START: 0.0288
+- A_ACCEPTED-COMPLETE: 0.0149
+- A_FINALIZED-COMPLETE: 0.0149
+- W_Completeren aanvraag-COMPLETE: 0.0288
+- A_CANCELLED-COMPLETE: 0.0089
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0030
+- W_Valideren aanvraag-SCHEDULE: 0.0020
+*** 11254 ***
+- W_Completeren aanvraag-START: 0.4000
+- W_Completeren aanvraag-COMPLETE: 0.6000
+*** 11003 ***
+- W_Nabellen offertes-START: 0.1254
+- W_Nabellen offertes-COMPLETE: 0.1294
+- W_Nabellen incomplete dossiers-START: 0.0372
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0372
+- W_Completeren aanvraag-START: 0.1422
+- W_Completeren aanvraag-COMPLETE: 0.1519
+- O_SELECTED-COMPLETE: 0.0354
+- O_CANCELLED-COMPLETE: 0.0139
+- O_CREATED-COMPLETE: 0.0354
+- O_SENT-COMPLETE: 0.0354
+- W_Nabellen offertes-SCHEDULE: 0.0346
+- W_Valideren aanvraag-SCHEDULE: 0.0024
+- A_DECLINED-COMPLETE: 0.0238
+- O_DECLINED-COMPLETE: 0.0008
+- A_CANCELLED-COMPLETE: 0.0094
+- W_Valideren aanvraag-START: 0.0021
+- W_Valideren aanvraag-COMPLETE: 0.0021
+- A_ACCEPTED-COMPLETE: 0.0260
+- A_FINALIZED-COMPLETE: 0.0257
+- W_Afhandelen leads-START: 0.0445
+- W_Afhandelen leads-COMPLETE: 0.0445
+- A_PREACCEPTED-COMPLETE: 0.0193
+- W_Completeren aanvraag-SCHEDULE: 0.0193
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0008
+- W_Beoordelen fraude-SCHEDULE: 0.0013
+*** 10125 ***
+- W_Wijzigen contractgegevens-SCHEDULE: 0.3333
+- W_Valideren aanvraag-START: 0.3333
+- W_Valideren aanvraag-COMPLETE: 0.3333
+*** 11269 ***
+- W_Nabellen offertes-START: 0.1667
+- W_Nabellen offertes-COMPLETE: 0.1667
+- W_Nabellen incomplete dossiers-START: 0.1667
+- W_Nabellen incomplete dossiers-COMPLETE: 0.1667
+- W_Afhandelen leads-START: 0.1667
+- W_Afhandelen leads-COMPLETE: 0.1667
+*** 10821 ***
+- W_Valideren aanvraag-START: 0.5000
+- W_Valideren aanvraag-COMPLETE: 0.5000
+*** 11289 ***
+- W_Valideren aanvraag-START: 0.3174
+- W_Valideren aanvraag-COMPLETE: 0.3169
+- W_Nabellen incomplete dossiers-START: 0.0307
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0307
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0614
+- A_DECLINED-COMPLETE: 0.0264
+- O_DECLINED-COMPLETE: 0.0264
+- A_CANCELLED-COMPLETE: 0.0014
+- O_CANCELLED-COMPLETE: 0.0077
+- W_Nabellen offertes-START: 0.0038
+- O_SENT_BACK-COMPLETE: 0.0067
+- W_Valideren aanvraag-SCHEDULE: 0.0081
+- W_Nabellen offertes-COMPLETE: 0.0038
+- W_Beoordelen fraude-SCHEDULE: 0.0014
+- O_SELECTED-COMPLETE: 0.0072
+- O_CREATED-COMPLETE: 0.0072
+- O_SENT-COMPLETE: 0.0072
+- O_ACCEPTED-COMPLETE: 0.0326
+- A_REGISTERED-COMPLETE: 0.0326
+- A_ACTIVATED-COMPLETE: 0.0326
+- A_APPROVED-COMPLETE: 0.0326
+- W_Nabellen offertes-SCHEDULE: 0.0014
+- W_Completeren aanvraag-START: 0.0010
+- A_ACCEPTED-COMPLETE: 0.0010
+- A_FINALIZED-COMPLETE: 0.0010
+- W_Completeren aanvraag-COMPLETE: 0.0010
+*** 10124 ***
+- W_Wijzigen contractgegevens-SCHEDULE: 0.1000
+- W_Nabellen offertes-START: 0.1000
+- W_Nabellen offertes-COMPLETE: 0.2000
+- W_Afhandelen leads-START: 0.1000
+- W_Afhandelen leads-COMPLETE: 0.1000
+- W_Valideren aanvraag-START: 0.1000
+- W_Valideren aanvraag-COMPLETE: 0.1000
+- W_Completeren aanvraag-START: 0.1000
+- W_Completeren aanvraag-COMPLETE: 0.1000
+*** 11299 ***
+- W_Nabellen offertes-START: 0.2429
+- W_Nabellen offertes-COMPLETE: 0.2595
+- W_Nabellen incomplete dossiers-START: 0.0071
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0071
+- O_CANCELLED-COMPLETE: 0.0179
+- A_CANCELLED-COMPLETE: 0.0143
+- O_SELECTED-COMPLETE: 0.0167
+- O_CREATED-COMPLETE: 0.0167
+- O_SENT-COMPLETE: 0.0167
+- W_Nabellen offertes-SCHEDULE: 0.0155
+- W_Valideren aanvraag-START: 0.0012
+- W_Valideren aanvraag-COMPLETE: 0.0012
+- A_DECLINED-COMPLETE: 0.0036
+- O_DECLINED-COMPLETE: 0.0012
+- W_Completeren aanvraag-START: 0.1702
+- W_Completeren aanvraag-COMPLETE: 0.1762
+- A_ACCEPTED-COMPLETE: 0.0119
+- A_FINALIZED-COMPLETE: 0.0119
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0012
+- W_Afhandelen leads-START: 0.0024
+- W_Afhandelen leads-COMPLETE: 0.0024
+- A_PREACCEPTED-COMPLETE: 0.0012
+- W_Completeren aanvraag-SCHEDULE: 0.0012
+*** 11309 ***
+- W_Nabellen offertes-START: 0.1489
+- A_CANCELLED-COMPLETE: 0.0253
+- O_CANCELLED-COMPLETE: 0.0199
+- W_Nabellen offertes-COMPLETE: 0.1516
+- O_SELECTED-COMPLETE: 0.0213
+- O_CREATED-COMPLETE: 0.0213
+- O_SENT-COMPLETE: 0.0213
+- W_Nabellen offertes-SCHEDULE: 0.0213
+- W_Nabellen incomplete dossiers-START: 0.0066
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0066
+- W_Completeren aanvraag-START: 0.2553
+- W_Completeren aanvraag-COMPLETE: 0.2593
+- A_DECLINED-COMPLETE: 0.0093
+- O_DECLINED-COMPLETE: 0.0013
+- A_ACCEPTED-COMPLETE: 0.0160
+- A_FINALIZED-COMPLETE: 0.0146
+*** 11300 ***
+- W_Nabellen offertes-START: 0.1569
+- W_Nabellen offertes-COMPLETE: 0.1579
+- W_Completeren aanvraag-START: 0.1911
+- W_Completeren aanvraag-COMPLETE: 0.1942
+- A_CANCELLED-COMPLETE: 0.0191
+- O_CANCELLED-COMPLETE: 0.0201
+- A_DECLINED-COMPLETE: 0.0080
+- W_Nabellen incomplete dossiers-START: 0.0050
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0050
+- O_SELECTED-COMPLETE: 0.0423
+- O_CREATED-COMPLETE: 0.0423
+- O_SENT-COMPLETE: 0.0423
+- W_Nabellen offertes-SCHEDULE: 0.0412
+- A_ACCEPTED-COMPLETE: 0.0322
+- A_FINALIZED-COMPLETE: 0.0322
+- W_Valideren aanvraag-START: 0.0040
+- W_Valideren aanvraag-COMPLETE: 0.0040
+- W_Nabellen incomplete dossiers-SCHEDULE: 0.0020
+*** 11302 ***
+- W_Nabellen offertes-START: 0.1141
+- W_Nabellen offertes-COMPLETE: 0.1180
+- W_Nabellen incomplete dossiers-START: 0.0146
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0146
+- O_CANCELLED-COMPLETE: 0.0127
+- A_CANCELLED-COMPLETE: 0.0059
+- O_SELECTED-COMPLETE: 0.0332
+- O_CREATED-COMPLETE: 0.0332
+- O_SENT-COMPLETE: 0.0332
+- W_Nabellen offertes-SCHEDULE: 0.0332
+- W_Completeren aanvraag-START: 0.2449
+- W_Completeren aanvraag-COMPLETE: 0.2498
+- A_DECLINED-COMPLETE: 0.0127
+- A_ACCEPTED-COMPLETE: 0.0244
+- A_FINALIZED-COMPLETE: 0.0244
+- W_Valideren aanvraag-START: 0.0010
+- W_Valideren aanvraag-COMPLETE: 0.0010
+- W_Afhandelen leads-START: 0.0117
+- W_Afhandelen leads-COMPLETE: 0.0117
+- W_Beoordelen fraude-SCHEDULE: 0.0010
+- A_PREACCEPTED-COMPLETE: 0.0020
+- W_Completeren aanvraag-SCHEDULE: 0.0020
+- W_Valideren aanvraag-SCHEDULE: 0.0010
+*** 11319 ***
+- W_Nabellen offertes-START: 0.1477
+- W_Nabellen offertes-COMPLETE: 0.1580
+- W_Completeren aanvraag-START: 0.2163
+- W_Completeren aanvraag-COMPLETE: 0.2215
+- O_CANCELLED-COMPLETE: 0.0091
+- O_SELECTED-COMPLETE: 0.0311
+- O_CREATED-COMPLETE: 0.0311
+- O_SENT-COMPLETE: 0.0311
+- W_Nabellen offertes-SCHEDULE: 0.0311
+- A_ACCEPTED-COMPLETE: 0.0272
+- A_FINALIZED-COMPLETE: 0.0259
+- A_CANCELLED-COMPLETE: 0.0091
+- W_Nabellen incomplete dossiers-START: 0.0026
+- W_Nabellen incomplete dossiers-COMPLETE: 0.0026
+- A_DECLINED-COMPLETE: 0.0065
+- O_SENT_BACK-COMPLETE: 0.0233
+- W_Valideren aanvraag-SCHEDULE: 0.0233
+- W_Afhandelen leads-START: 0.0013
+- W_Afhandelen leads-COMPLETE: 0.0013
+*** 11304 ***
+- W_Beoordelen fraude-START: 0.4634
+- W_Beoordelen fraude-COMPLETE: 0.4634
+- W_Afhandelen leads-SCHEDULE: 0.0732
