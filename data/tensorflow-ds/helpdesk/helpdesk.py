@@ -64,14 +64,14 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
             description=_DESCRIPTION,
             features=tfds.features.Sequence({
                 'activity': tfds.features.Text(),
-                'resource': tfds.features.ClassLabel(num_classes=23),
-                'product': tfds.features.ClassLabel(num_classes=22),
+                'resource': tfds.features.ClassLabel(num_classes=24),
+                'product': tfds.features.ClassLabel(num_classes=23),
                 'customer': tfds.features.ClassLabel(num_classes=398),
-                'responsible_section': tfds.features.ClassLabel(num_classes=8),
-                'service_level': tfds.features.ClassLabel(num_classes=5),
-                'service_type': tfds.features.ClassLabel(num_classes=5),
-                'workgroup': tfds.features.ClassLabel(num_classes=5),
-                'seriousness': tfds.features.ClassLabel(num_classes=5),
+                'responsible_section': tfds.features.ClassLabel(num_classes=9),
+                'service_level': tfds.features.ClassLabel(num_classes=6),
+                'service_type': tfds.features.ClassLabel(num_classes=6),
+                'workgroup': tfds.features.ClassLabel(num_classes=6),
+                'seriousness': tfds.features.ClassLabel(num_classes=6),
                 'variant': tfds.features.ClassLabel(num_classes=227),
                 'relative_time': tf.int32,
                 'day_part': tfds.features.ClassLabel(num_classes=3),
@@ -128,45 +128,64 @@ def preprocess_trace(trace):
     Preprocess events in traces.
     Extract classes from names and computes relative time.
     """
-    keys = ['activity', 'resource', 'relative_time', 'product',
-            'customer', 'responsible_section', 'service_level'
-            'service_type', 'workgroup', 'variant', 'seriousness',
-            'day_part', 'week_day']
-    trace_properties = dict.fromkeys(keys)
+    trace_properties = {'activity': ['<START>'], 'resource': [1], 'relative_time': [0], 'product': [1],
+                        'customer': [1], 'responsible_section': [1], 'service_level': [1],
+                        'service_type': [1], 'workgroup': [1], 'variant': [1], 'seriousness': [1],
+                        'day_part': [0], 'week_day':[0]}
+    #trace_properties = dict.fromkeys(keys)
 
     for count, event in enumerate(trace):
         if count == 0:
-            delta_t = datetime.timedelta(0)
+#            delta_t = datetime.timedelta(0)
             event_date = event['time:timestamp']
-            trace_properties['activity'] = [event['Activity']]
-            trace_properties['resource'] = [int(event['Resource'].split()[1])]
-            trace_properties['product'] = [int(event['product'].split()[1])]
-            trace_properties['customer'] = [int(event['customer'].split()[1])]
-            trace_properties['responsible_section'] = [int(event['responsible_section'].split()[1])]
-            trace_properties['service_level'] = [int(event['service_level'].split()[1])]
-            trace_properties['service_type'] = [int(event['service_type'].split()[1])]
-            trace_properties['workgroup'] = [int(event['workgroup'].split()[1])]
-            trace_properties['variant'] = [event['Variant index']]
-            trace_properties['seriousness'] = [int(event['seriousness_2'].split()[1])]
-            trace_properties['relative_time'] = [delta_t.seconds]
             trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
             trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
+            trace_properties['variant'] = [event['Variant index']]
+            trace_properties['customer'] = [int(event['customer'].split()[1])]
+#            trace_properties['activity'] = [event['Activity']]
+#            trace_properties['resource'] = [int(event['Resource'].split()[1])]
+#            trace_properties['product'] = [int(event['product'].split()[1])]
+#            trace_properties['customer'] = [int(event['customer'].split()[1])]
+#            trace_properties['responsible_section'] = [int(event['responsible_section'].split()[1])]
+#            trace_properties['service_level'] = [int(event['service_level'].split()[1])]
+#            trace_properties['service_type'] = [int(event['service_type'].split()[1])]
+#            trace_properties['workgroup'] = [int(event['workgroup'].split()[1])]
+#            trace_properties['variant'] = [event['Variant index']]
+#            trace_properties['seriousness'] = [int(event['seriousness_2'].split()[1])]
+#            trace_properties['relative_time'] = [delta_t.seconds]
+#            trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
+#            trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
         else:
             delta_t = event['time:timestamp'] - event_date
             event_date = event['time:timestamp']
             trace_properties['activity'].append(event['Activity'])
-            trace_properties['resource'].append(int(event['Resource'].split()[1]))
-            trace_properties['product'].append(int(event['product'].split()[1]))
+            trace_properties['resource'].append(int(event['Resource'].split()[1])+1)
+            trace_properties['product'].append(int(event['product'].split()[1])+1)
             trace_properties['customer'].append(int(event['customer'].split()[1]))
             trace_properties['responsible_section'].append(
-                int(event['responsible_section'].split()[1]))
-            trace_properties['service_level'].append(int(event['service_level'].split()[1]))
-            trace_properties['service_type'].append(int(event['service_type'].split()[1]))
-            trace_properties['workgroup'].append(int(event['workgroup'].split()[1]))
+                int(event['responsible_section'].split()[1])+1)
+            trace_properties['service_level'].append(int(event['service_level'].split()[1])+1)
+            trace_properties['service_type'].append(int(event['service_type'].split()[1])+1)
+            trace_properties['workgroup'].append(int(event['workgroup'].split()[1])+1)
             trace_properties['variant'].append(event['Variant index'])
-            trace_properties['seriousness'].append(int(event['seriousness_2'].split()[1]))
+            trace_properties['seriousness'].append(int(event['seriousness_2'].split()[1])+1)
             trace_properties['relative_time'].append(delta_t.seconds)
             trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
             trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
+            event_date = event['time:timestamp']
+
+    trace_properties['activity'].append('<END>')
+    trace_properties['resource'].append(1)
+    trace_properties['product'].append(1)
+    trace_properties['customer'].append(1)
+    trace_properties['responsible_section'].append(1)
+    trace_properties['service_level'].append(1)
+    trace_properties['service_type'].append(1)
+    trace_properties['workgroup'].append(1)
+    trace_properties['variant'].append(event['Variant index'])
+    trace_properties['seriousness'].append(int(event['seriousness_2'].split()[1]))
+    trace_properties['relative_time'].append(0)
+    trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
+    trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
 
     return trace_properties

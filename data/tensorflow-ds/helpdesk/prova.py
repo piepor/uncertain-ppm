@@ -16,7 +16,7 @@ wg = set()
 seri = set()
 var = set()
 
-log_csv = pd.read_csv('../../finale.csv', sep=',')
+log_csv = pd.read_csv('./dummy_data/finale.csv', sep=',')
 # Create the Event Log object as in the library pm4py
 log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
 log_csv = log_csv.sort_values('Complete Timestamp')
