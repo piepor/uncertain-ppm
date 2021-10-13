@@ -6,6 +6,7 @@ import tensorflow as tf
 from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.log.util import dataframe_utils
 import pandas as pd
+import random
 
 _DESCRIPTION = """
 
@@ -98,9 +99,11 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
             log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ATTRIBUTE_PREFIX: 'case:'}
         event_log = log_converter.apply(log_csv, parameters=parameters,
                                         variant=log_converter.Variants.TO_EVENT_LOG)
+        random_indeces = random.sample(range(len(event_log)), len(event_log))
+        event_log_shuffled = [event_log[index] for index in random_indeces]
 
         return {
-            'train': self._generate_examples(event_log),
+            'train': self._generate_examples(event_log_shuffled),
         }
 
 
@@ -132,29 +135,14 @@ def preprocess_trace(trace):
                         'customer': [1], 'responsible_section': [1], 'service_level': [1],
                         'service_type': [1], 'workgroup': [1], 'variant': [1], 'seriousness': [1],
                         'day_part': [0], 'week_day':[0]}
-    #trace_properties = dict.fromkeys(keys)
 
     for count, event in enumerate(trace):
         if count == 0:
-#            delta_t = datetime.timedelta(0)
             event_date = event['time:timestamp']
             trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
             trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
             trace_properties['variant'] = [event['Variant index']]
             trace_properties['customer'] = [int(event['customer'].split()[1])]
-#            trace_properties['activity'] = [event['Activity']]
-#            trace_properties['resource'] = [int(event['Resource'].split()[1])]
-#            trace_properties['product'] = [int(event['product'].split()[1])]
-#            trace_properties['customer'] = [int(event['customer'].split()[1])]
-#            trace_properties['responsible_section'] = [int(event['responsible_section'].split()[1])]
-#            trace_properties['service_level'] = [int(event['service_level'].split()[1])]
-#            trace_properties['service_type'] = [int(event['service_type'].split()[1])]
-#            trace_properties['workgroup'] = [int(event['workgroup'].split()[1])]
-#            trace_properties['variant'] = [event['Variant index']]
-#            trace_properties['seriousness'] = [int(event['seriousness_2'].split()[1])]
-#            trace_properties['relative_time'] = [delta_t.seconds]
-#            trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
-#            trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
         else:
             delta_t = event['time:timestamp'] - event_date
             event_date = event['time:timestamp']
