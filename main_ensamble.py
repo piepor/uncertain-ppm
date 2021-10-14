@@ -30,6 +30,7 @@ class PreprocessingModel(tf.keras.Model):
         super().__init__()
 
         self.preprocessing_layers = []
+        #breakpoint()
         for feature in features:
             if feature['feature-type'] == 'string':
                 string_lookup = tf.keras.layers.StringLookup(
@@ -44,16 +45,16 @@ class PreprocessingModel(tf.keras.Model):
                     ], name=feature['name']
                     )
                 )
-            elif feature['feature-type'] == 'continuos':
+            elif feature['feature-type'] == 'continuous':
                 normalization_layer = tf.keras.layers.Normalization(axis=None)
                 normalization_layer.adapt(ds.map(lambda x: x[feature['name']]))
                 self.preprocessing_layers.append(
                     tf.keras.Sequential([
                         normalization_layer,
-                        tf.keras.layers.Reshape((None, 1))
+                        tf.keras.layers.Reshape((-1, 1))
                     ], name=feature['name'])
                 )
-            else:
+            elif feature['feature-type'] == 'categorical':
                 self.preprocessing_layers.append(
                     tf.keras.Sequential([
                         tf.keras.layers.Embedding(
@@ -148,18 +149,16 @@ def accuracy_function(real, pred):
 
 def compute_input_signature(features):
     train_step_signature = []
-    #breakpoint()
     for feature in features:
         if feature['dtype'] == 'string':
             train_step_signature.append(tf.TensorSpec(shape=(None, None), dtype=tf.string))
         elif feature['dtype'] == 'int64': 
-            #breakpoint()
             train_step_signature.append(tf.TensorSpec(shape=(None, None), dtype=tf.int64))
         elif feature['dtype'] == 'int32': 
             train_step_signature.append(tf.TensorSpec(shape=(None, None), dtype=tf.int32))
     return train_step_signature
 
-features = compute_features('features.params', {'activity': vocabulary})
+features = compute_features('act_res_var_time.params', {'activity': vocabulary})
 train_step_signature = compute_input_signature(features)
 output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
                                                  num_oov_indices=1)
@@ -175,10 +174,16 @@ train_accuracy = tf.keras.metrics.Mean(name='train_accuracy')
 vali_loss = tf.keras.metrics.Mean(name='vali_loss')
 vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
 
-@tf.function(input_signature=train_step_signature)
-def train_step(act, res):
-    input_data = [act[:, :-1], res[:, :-1]]
-    target_data = output_preprocess(act[:, 1:])
+@tf.function(input_signature=[train_step_signature])
+def train_step(*args):
+#def train_step(act, res, var):
+#    input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
+#    target_data = output_preprocess(act[:, 1:])
+    input_data = []
+    #breakpoint()
+    for arg in args[0]:
+        input_data.append(arg[:, :-1])
+    target_data = output_preprocess(args[0][0][:, 1:])
     with tf.GradientTape() as tape:
         logits = model(input_data, training=True) 
         loss_value = loss_function(target_data, logits)
@@ -189,10 +194,14 @@ def train_step(act, res):
     train_loss(loss_value)
     train_accuracy(accuracy_function(target_data, logits))
 
-@tf.function(input_signature=train_step_signature)
-def vali_step(act, res):
-    input_data = [act[:, :-1], res[:, :-1]]
-    target_data = output_preprocess(act[:, 1:])
+@tf.function(input_signature=[train_step_signature])
+def vali_step(*args):
+#def vali_step(act, res, var):
+    input_data = []
+    for arg in args[0]:
+        input_data.append(arg[:, :-1])
+    #input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
+    target_data = output_preprocess(args[0][0][:, 1:])
     logits = model(input_data, training=False) 
     loss_value = loss_function(target_data, logits)
 
@@ -244,9 +253,10 @@ def main():
     padded_ds_vali = ds_vali.padded_batch(32, 
                                           padded_shapes=padded_shapes,
                                           padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+    #breakpoint()
 
     # train loop
-    epochs = 100
+    epochs = 2
     wait = 0
     best = 0
     patience = 10
@@ -256,13 +266,22 @@ def main():
     for epoch in tqdm(range(epochs), desc='Train', position=0):
         for step, batch_data in enumerate(tqdm(padded_ds, desc='Epoch', position=1, leave=False)):
             # extract data
-            train_step(batch_data['activity'], batch_data['resource'])
+            input_data = []
+            for feature in features:
+                input_data.append(batch_data[feature['name']])
+            train_step(input_data)
+#            train_step([batch_data['activity'], batch_data['resource'], 
+#                        batch_data['variant']])
+            
         with train_summary_writer.as_default():
             tf.summary.scalar('loss', train_loss.result(), step=epoch)
             tf.summary.scalar('accuracy', train_accuracy.result(), step=epoch)
 
         for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=1, leave=False)):
-            vali_step(batch_data['activity'], batch_data['resource'])
+            input_data = []
+            for feature in features:
+                input_data.append(batch_data[feature['name']])
+            vali_step(input_data)
         with vali_summary_writer.as_default():
             tf.summary.scalar('loss', vali_loss.result(), step=epoch)
             tf.summary.scalar('accuracy', vali_accuracy.result(), step=epoch)
@@ -280,9 +299,6 @@ def main():
         if wait >= patience:
             break
 
-#    print(f'Epoch {epoch + 1} Loss {train_loss.result():.4f} Accuracy {train_accuracy.result():.4f}')
-#    print(f'Epoch {epoch + 1} Loss {vali_loss.result():.4f} Accuracy {vali_accuracy.result():.4f}')
-#    print(wait)
 
 if __name__ == '__main__':
     main()
