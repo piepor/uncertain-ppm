@@ -6,8 +6,10 @@ import numpy as np
 from tqdm import tqdm
 import yaml
 import datetime
+import os
+import glob
 
-ds_train = tfds.load('helpdesk', split='train[:70%]')
+ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
 ds_vali = tfds.load('helpdesk', split='train[70%:85%]')
 ds_test = tfds.load('helpdesk', split='train[85%:]')
 
@@ -162,104 +164,117 @@ features = compute_features('act_res_var_time.params', {'activity': vocabulary})
 train_step_signature = compute_input_signature(features)
 output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
                                                  num_oov_indices=1)
-num_heads = 8
+num_heads = 2
 embed_dim = sum([feature['output-dim'] for feature in features])
-feed_forward_dim = 1024
-model = GeneralModel(1, features, ds_train, embed_dim, num_heads, feed_forward_dim)
+feed_forward_dim = 512
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 optimizer = tf.keras.optimizers.Adam()
-
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.Mean(name='train_accuracy')
-vali_loss = tf.keras.metrics.Mean(name='vali_loss')
-vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
-
-@tf.function(input_signature=[train_step_signature])
-def train_step(*args):
-#def train_step(act, res, var):
-#    input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
-#    target_data = output_preprocess(act[:, 1:])
-    input_data = []
-    #breakpoint()
-    for arg in args[0]:
-        input_data.append(arg[:, :-1])
-    target_data = output_preprocess(args[0][0][:, 1:])
-    with tf.GradientTape() as tape:
-        logits = model(input_data, training=True) 
-        loss_value = loss_function(target_data, logits)
-
-    grads = tape.gradient(loss_value, model.trainable_weights)
-    optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-    train_loss(loss_value)
-    train_accuracy(accuracy_function(target_data, logits))
-
-@tf.function(input_signature=[train_step_signature])
-def vali_step(*args):
-#def vali_step(act, res, var):
-    input_data = []
-    for arg in args[0]:
-        input_data.append(arg[:, :-1])
-    #input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
-    target_data = output_preprocess(args[0][0][:, 1:])
-    logits = model(input_data, training=False) 
-    loss_value = loss_function(target_data, logits)
-
-    vali_loss(loss_value)
-    vali_accuracy(accuracy_function(target_data, logits))
-
-def main():
     
+ensamble_list = glob.glob('models_ensamble/ensamble*')
+num = 0
+for ensamble in ensamble_list:
+    #breakpoint()
+    if int(ensamble.split('_')[2]) > num:
+        num = int(ensamble.split('_')[2])
+model_dir = 'models_ensamble/ensamble_{}'.format(int(num)+1)
+os.makedirs(model_dir)
+
+padded_shapes = {
+    'activity': [None],
+    'resource': [None],
+    'product': [None],    
+    'customer': [None],    
+    'responsible_section': [None],    
+    'service_level': [None],    
+    'service_type': [None],    
+    'seriousness': [None],    
+    'workgroup': [None],
+    'variant': [None],    
+    'relative_time': [None],
+    'day_part': [None],
+    'week_day': [None]
+}
+padding_values = {
+    'activity': '<PAD>',
+    'resource': tf.cast(0, dtype=tf.int64),
+    'product': tf.cast(0, dtype=tf.int64),    
+    'customer': tf.cast(0, dtype=tf.int64),    
+    'responsible_section': tf.cast(0, dtype=tf.int64),    
+    'service_level': tf.cast(0, dtype=tf.int64),    
+    'service_type': tf.cast(0, dtype=tf.int64),    
+    'seriousness': tf.cast(0, dtype=tf.int64),    
+    'workgroup': tf.cast(0, dtype=tf.int64),
+    'variant': tf.cast(0, dtype=tf.int64),    
+    'relative_time': tf.cast(0, dtype=tf.int32),
+    'day_part': tf.cast(0, dtype=tf.int64),
+    'week_day': tf.cast(0, dtype=tf.int64),
+}
+
+# train loop
+epochs = 2
+wait = 0
+best = 0
+patience = 10
+batch_size = 32
+num_models_ensamble = 5
+
+padded_ds = ds_train.padded_batch(batch_size, 
+        padded_shapes=padded_shapes,
+        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+padded_ds_vali = ds_vali.padded_batch(batch_size, 
+                                      padded_shapes=padded_shapes,
+                                      padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+#breakpoint()
+
+for _ in range(num_models_ensamble):
+    #tf.keras.backend.clear_session()
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
     vali_log_dir = 'logs/gradient_tape/' + current_time + '/validation'
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
     vali_summary_writer = tf.summary.create_file_writer(vali_log_dir)
+    model_path = os.path.join(model_dir, current_time)
 
-    padded_shapes = {
-        'activity': [None],
-        'resource': [None],
-        'product': [None],    
-        'customer': [None],    
-        'responsible_section': [None],    
-        'service_level': [None],    
-        'service_type': [None],    
-        'seriousness': [None],    
-        'workgroup': [None],
-        'variant': [None],    
-        'relative_time': [None],
-        'day_part': [None],
-        'week_day': [None]
-    }
-    padding_values = {
-        'activity': '<PAD>',
-        'resource': tf.cast(0, dtype=tf.int64),
-        'product': tf.cast(0, dtype=tf.int64),    
-        'customer': tf.cast(0, dtype=tf.int64),    
-        'responsible_section': tf.cast(0, dtype=tf.int64),    
-        'service_level': tf.cast(0, dtype=tf.int64),    
-        'service_type': tf.cast(0, dtype=tf.int64),    
-        'seriousness': tf.cast(0, dtype=tf.int64),    
-        'workgroup': tf.cast(0, dtype=tf.int64),
-        'variant': tf.cast(0, dtype=tf.int64),    
-        'relative_time': tf.cast(0, dtype=tf.int32),
-        'day_part': tf.cast(0, dtype=tf.int64),
-        'week_day': tf.cast(0, dtype=tf.int64),
-    }
+    train_loss = tf.keras.metrics.Mean(name='train_loss')
+    train_accuracy = tf.keras.metrics.Mean(name='train_accuracy')
+    vali_loss = tf.keras.metrics.Mean(name='vali_loss')
+    vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
 
-    padded_ds = ds_train.padded_batch(32, 
-                                      padded_shapes=padded_shapes,
-                                      padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-    padded_ds_vali = ds_vali.padded_batch(32, 
-                                          padded_shapes=padded_shapes,
-                                          padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-    #breakpoint()
+    model = GeneralModel(1, features, ds_train, embed_dim, num_heads, feed_forward_dim)
 
-    # train loop
-    epochs = 2
-    wait = 0
-    best = 0
-    patience = 10
+    @tf.function(input_signature=[train_step_signature])
+    def train_step(*args):
+#def train_step(act, res, var):
+#    input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
+#    target_data = output_preprocess(act[:, 1:])
+        input_data = []
+        #breakpoint()
+        for arg in args[0]:
+            input_data.append(arg[:, :-1])
+        target_data = output_preprocess(args[0][0][:, 1:])
+        with tf.GradientTape() as tape:
+            logits = model(input_data, training=True) 
+            loss_value = loss_function(target_data, logits)
+
+        grads = tape.gradient(loss_value, model.trainable_weights)
+        optimizer.apply_gradients(zip(grads, model.trainable_weights))
+
+        train_loss(loss_value)
+        train_accuracy(accuracy_function(target_data, logits))
+
+    @tf.function(input_signature=[train_step_signature])
+    def vali_step(*args):
+#def vali_step(act, res, var):
+        input_data = []
+        for arg in args[0]:
+            input_data.append(arg[:, :-1])
+        #input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
+        target_data = output_preprocess(args[0][0][:, 1:])
+        logits = model(input_data, training=False) 
+        loss_value = loss_function(target_data, logits)
+
+        vali_loss(loss_value)
+        vali_accuracy(accuracy_function(target_data, logits))
 
     bar_epoch = tqdm(range(epochs), desc='Train', position=0)
     bar_batch = tqdm(padded_ds, desc='Epoch', position=1, leave=False)
@@ -298,7 +313,36 @@ def main():
 
         if wait >= patience:
             break
+    
+    model.save(model_path)
 
+# compute ensamble accuracy
+vali_accuracy_ensamble = tf.keras.metrics.Mean(name='vali_accuracy_ensamble')
+models_names = os.listdir(model_dir)
+for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, leave=False)):
+    input_data = []
+    for feature in features:
+        input_data.append(batch_data[feature['name']])
+    for n, name in enumerate(models_names):
+        @tf.function(input_signature=[train_step_signature])
+        def vali_step_ensamble(*args):
+#def vali_step(act, res, var):
+            input_data = []
+            for arg in args[0]:
+                input_data.append(arg[:, :-1])
+            #input_data = [act[:, :-1], res[:, :-1], var[:, :-1]]
+            target_data = output_preprocess(args[0][0][:, 1:])
+            logits = model(input_data, training=False) 
+            return logits, target_data
+        model = tf.keras.models.load_model(os.path.join(model_dir, name))
+        if n == 0:
+            logits_total, target_data = vali_step_ensamble(input_data)
+        else:
+            logits_single, target_data = vali_step_ensamble(input_data)
+            logits_total += logits_single
 
-if __name__ == '__main__':
-    main()
+    logits_total /= n
+
+    vali_accuracy_ensamble(accuracy_function(target_data, logits_total))
+
+print(vali_accuracy_ensamble.result())
