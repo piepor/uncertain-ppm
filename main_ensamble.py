@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -6,7 +8,6 @@ import numpy as np
 from tqdm import tqdm
 import yaml
 import datetime
-import os
 import glob
 
 ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
@@ -118,17 +119,20 @@ class TransformerBlock(layers.Layer):
 
 
 class GeneralModel(tf.keras.Model):
-    def __init__(self, num_layers, features, ds, embed_dim, num_heads, feed_forward_dim):
+    def __init__(self, num_layers, features, ds, embed_dim, num_heads, feed_forward_dim, num_voc):
         super().__init__()
         self.embedding_model = PreprocessingModel(features, ds)
         self.transformer_block = TransformerBlock(embed_dim, num_heads, feed_forward_dim)
         self.transformer = tf.keras.Sequential()
+        self.ffn_output = tf.keras.layers.Dense(num_voc)
         for n in range(num_layers):
             self.transformer.add(self.transformer_block)
 
     def call(self, inputs):
         feature_embedding = self.embedding_model(inputs)
-        return self.transformer(feature_embedding)
+        out = self.transformer(feature_embedding)
+        out = self.ffn_output(out)
+        return out
 
 def loss_function(real, pred):
   mask = tf.math.logical_not(tf.math.equal(real, 0))
@@ -211,7 +215,7 @@ padding_values = {
 }
 
 # train loop
-epochs = 2
+epochs = 100
 wait = 0
 best = 0
 patience = 10
@@ -240,7 +244,7 @@ for _ in range(num_models_ensamble):
     vali_loss = tf.keras.metrics.Mean(name='vali_loss')
     vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
 
-    model = GeneralModel(1, features, ds_train, embed_dim, num_heads, feed_forward_dim)
+    model = GeneralModel(1, features, ds_train, embed_dim, num_heads, feed_forward_dim, features[0]['input-dim'])
 
     @tf.function(input_signature=[train_step_signature])
     def train_step(*args):
