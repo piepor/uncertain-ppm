@@ -4,6 +4,7 @@ import tensorflow_datasets as tfds
 import os
 import plotly.graph_objects as go
 import numpy as np
+from plotly.subplots import make_subplots
 
 ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
 ds_vali = tfds.load('helpdesk', split='train[70%:85%]')
@@ -57,7 +58,7 @@ def compute_features(file_path, vocabularies):
     return features
 
 features = compute_features('act_res_var_time.params', {'activity': vocabulary})
-batch_size = 16
+batch_size = 1
 padded_ds = ds_train.padded_batch(batch_size, 
         padded_shapes=padded_shapes,
         padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
@@ -74,40 +75,64 @@ for model_name in models_names:
     models.append(model)
 
 #for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=1, leave=False)):
-batch_data = padded_ds_vali.take(1).get_single_element()
-input_data = []
-for feature in features:
-    input_data.append(batch_data[feature['name']][:, :-1])
-target_data = batch_data['activity'][:, 1:]
-target_data = output_preprocess(target_data)
+#batch_data = padded_ds_vali.take(1).get_single_element()
+for batch_data in padded_ds:
+    #breakpoint()
+    if batch_data['variant'][0, 0] == 92:
+        input_data = []
+        for feature in features:
+            input_data.append(batch_data[feature['name']][:, :-1])
+        target_data = batch_data['activity'][:, 1:]
+        target_data = output_preprocess(target_data)
 
-for i, model in enumerate(models):
-    out_prob = model(input_data)
-    if  i == 0:
-        out_prob_tot = out_prob
-        out_prob_distr = tf.nn.softmax(out_prob)
-    else:
-        out_prob_tot_distr += tf.nn.softmax(out_prob)
+        u_a = 0
+        for i, model in enumerate(models):
+            out_prob = tf.nn.softmax(model(input_data))
+            if  i == 0:
+                out_prob_tot_distr = out_prob
+            else:
+                out_prob_tot_distr += out_prob
+            # compute aleatoric uncertainty
+            u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
 
-out_prob_tot_distr /= len(models)
+        out_prob_tot_distr /= len(models)
+        u_a /= -len(models)
+        # compute total uncertainty
+        u_t = -np.sum(out_prob_tot_distr.numpy() * np.log(out_prob_tot_distr.numpy()), axis=-1)
+        # compute epistemic uncertainty
+        u_e = u_t - u_a
+        #breakpoint()
 #out_prob_tot_distr = tf.nn.softmax(out_prob_tot)
 
-vocabulary_plot = ['<PAD>', '<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
-              'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
-              'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
-              'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
-for i in range(5):
-    batch_seq = out_prob_tot_distr[i, :]
-    act = ''
-    for j in range(target_data.shape[1]):
-        if not target_data[i, j].numpy() == 0:
-            act += '{} - '.format(input_data[0][i, j].numpy().decode("utf-8"))
-            target_numpy = np.zeros(len(vocabulary_plot))
-            target_numpy[target_data[i, j].numpy()] = 1
-            fig = go.Figure()
-            fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob_distr[i, j].numpy(), name='single model'))
-            fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob_tot_distr[i, j].numpy(), name='ensamble models'))
-            fig.add_trace(go.Bar(x=vocabulary_plot, y=target_numpy, name='actual event'))
-            fig.update_layout(barmode='overlay', title_text=act)
-            fig.update_traces(opacity=0.6)
-            fig.show(renderer='chromium')
+        vocabulary_plot = ['<PAD>', '<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
+                      'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
+                      'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
+                      'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
+#        for i in range(5):
+#            batch_seq = out_prob_tot_distr[i, :]
+        act = ''
+        i = 0
+        for j in range(target_data.shape[1]):
+            if not target_data[i, j].numpy() == 0:
+                act += '{} - '.format(input_data[0][i, j].numpy().decode("utf-8"))
+                target_numpy = np.zeros(len(vocabulary_plot))
+                target_numpy[target_data[i, j].numpy()] = 1
+                #fig = go.Figure()
+                fig = make_subplots(rows=1, cols=2, column_widths=[0.8, 0.2])
+                fig.add_trace(go.Bar(x=vocabulary_plot, y=target_numpy,
+                                     marker=dict(opacity=0.4), name='actual event'),
+                              row=1, col=1)
+                fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob[i, j].numpy(),
+                                     marker=dict(opacity=0.4), name='single model'),
+                              row=1, col=1)
+                fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob_tot_distr[i, j].numpy(),
+                                     marker=dict(opacity=0.4), name='ensamble models'),
+                              row=1, col=1)
+                fig.add_trace(go.Bar(x=['Uncertainty'], y=[u_t[i, j]], name='Epistemic', offsetgroup=0),
+                              row=1, col=2)
+                fig.add_trace(go.Bar(x=['Uncertainty'], y=[u_a[i, j]], name='Aleatoric', offsetgroup=0),
+                              row=1, col=2)
+                fig.layout['yaxis2'].update(range=[0, 1.2*np.max(u_t)])
+                fig.update_layout(barmode='overlay', title_text=act)
+                #fig.update_traces(opacity=0.6)
+                fig.show(renderer='chromium')
