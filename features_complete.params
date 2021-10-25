@@ -74,5 +74,5 @@ output-dim: 2
 name: 'relative_time'
 feature-type: 'continuous'
 dtype: 'int32'
-input-dim: 8
-output-dim: 2
+input-dim: 1
+output-dim: 1

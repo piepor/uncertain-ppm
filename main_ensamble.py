@@ -1,6 +1,6 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import tensorflow as tf
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from tensorflow import keras
 from tensorflow.keras import layers
 import tensorflow_datasets as tfds
@@ -9,6 +9,7 @@ from tqdm import tqdm
 import yaml
 import datetime
 import glob
+from shutil import copyfile
 
 ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
 ds_vali = tfds.load('helpdesk', split='train[70%:85%]')
@@ -164,7 +165,7 @@ def compute_input_signature(features):
             train_step_signature.append(tf.TensorSpec(shape=(None, None), dtype=tf.int32))
     return train_step_signature
 
-features = compute_features('act_res_var_time.params', {'activity': vocabulary})
+features = compute_features('act_res_day_week_time.params', {'activity': vocabulary})
 train_step_signature = compute_input_signature(features)
 output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
                                                  num_oov_indices=1)
@@ -174,14 +175,15 @@ feed_forward_dim = 512
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 optimizer = tf.keras.optimizers.Adam()
     
-ensamble_list = glob.glob('models_ensamble/ensamble*')
+ensamble_list = glob.glob('models_ensamble/helpdesk/ensamble*')
 num = 0
 for ensamble in ensamble_list:
     #breakpoint()
     if int(ensamble.split('_')[2]) > num:
         num = int(ensamble.split('_')[2])
-model_dir = 'models_ensamble/ensamble_{}'.format(int(num)+1)
+model_dir = 'models_ensamble/helpdesk/ensamble_{}'.format(int(num)+1)
 os.makedirs(model_dir)
+copyfile('act_res_day_week_time.params', os.path.join(model_dir, 'features.params'))
 
 padded_shapes = {
     'activity': [None],
@@ -253,6 +255,7 @@ for _ in range(num_models_ensamble):
 #    target_data = output_preprocess(act[:, 1:])
         input_data = []
         #breakpoint()
+        #breakpoint()
         for arg in args[0]:
             input_data.append(arg[:, :-1])
         target_data = output_preprocess(args[0][0][:, 1:])
@@ -322,12 +325,17 @@ for _ in range(num_models_ensamble):
 
 # compute ensamble accuracy
 vali_accuracy_ensamble = tf.keras.metrics.Mean(name='vali_accuracy_ensamble')
-models_names = os.listdir(model_dir)
+models_names = [name for name in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, name))]
+models = []
+for model_name in models_names:
+    model_path = os.path.join(model_dir, model_name)
+    model = tf.keras.models.load_model(model_path)
+    models.append(model)
 for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, leave=False)):
     input_data = []
     for feature in features:
         input_data.append(batch_data[feature['name']])
-    for n, name in enumerate(models_names):
+    for n, model in enumerate(models):
         @tf.function(input_signature=[train_step_signature])
         def vali_step_ensamble(*args):
 #def vali_step(act, res, var):
@@ -338,7 +346,6 @@ for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, 
             target_data = output_preprocess(args[0][0][:, 1:])
             logits = model(input_data, training=False) 
             return logits, target_data
-        model = tf.keras.models.load_model(os.path.join(model_dir, name))
         if n == 0:
             logits_total, target_data = vali_step_ensamble(input_data)
         else:
