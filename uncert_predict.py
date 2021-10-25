@@ -411,3 +411,18 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Box(y=u_e_array_single_wrong, name='Wrong predictions'))
     fig.update_layout(title_text="{} - Epistemic uncertainty".format(ds_name.capitalize()))
     fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_t_array_single))
+    fig.update_layout(title_text="{} - Total uncertainty".format(ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_a_array_single))
+    fig.update_layout(title_text="{} - Aleatoric uncertainty".format(ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_e_array_single))
+    fig.update_layout(title_text="{} - Epistemic uncertainty".format(ds_name.capitalize()))
+    fig.show(renderer='chromium')
