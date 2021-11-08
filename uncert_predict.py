@@ -443,3 +443,18 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Box(y=u_e_array_single_wrong, name='Wrong predictions'))
     fig.update_layout(title_text="{} - {} - Epistemic uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_t_array_single, name='Total uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_a_array_single, name='Aleatoric uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_e_array_single, name='Epistemic uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
