@@ -191,6 +191,7 @@ for ds, num_examples, ds_name in datasets:
     acc_array_mean = np.zeros(1)
     acc_array_single = np.zeros(1)
     target_prob_array = np.zeros(1)
+    target_label = np.asarray(['0'])
     for batch_idx, batch_data in enumerate(ds):
         #breakpoint()
         #if batch_data['variant'][0, 0] == 92 or COMPUTE_ALL:
@@ -198,6 +199,8 @@ for ds, num_examples, ds_name in datasets:
         for feature in features:
             input_data.append(batch_data[feature['name']][:, :-1])
         target_data = batch_data['activity'][:, 1:]
+        target_label = np.hstack([target_label, target_data.numpy().ravel()]) 
+        #breakpoint()
         target_data = output_preprocess(target_data)
         mask = tf.math.logical_not(tf.math.equal(target_data, 0))
 
@@ -322,6 +325,7 @@ for ds, num_examples, ds_name in datasets:
     u_a_array_single = u_a_array_single[1:]
     u_e_array_single = u_e_array_single[1:]
     target_prob_array = target_prob_array[1:]
+    target_label = target_label[1:]
     #breakpoint()
 # ordering
     ordered_acc_array = acc_array_single.argsort()
@@ -330,6 +334,7 @@ for ds, num_examples, ds_name in datasets:
     u_a_array_single = u_a_array_single[ordered_acc_array]
     u_e_array_single = u_e_array_single[ordered_acc_array]
     target_prob_array = target_prob_array[ordered_acc_array]
+    target_label_array = target_label[ordered_acc_array]
 
     group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
     hist_data = [u_t_array, u_a_array, u_e_array]
@@ -364,6 +369,7 @@ for ds, num_examples, ds_name in datasets:
     u_a_array_single = u_a_array_single[acc_array_single>-1]
     u_e_array_single = u_e_array_single[acc_array_single>-1]
     target_prob_array = target_prob_array[acc_array_single>-1]
+    target_label_array = target_label_array[acc_array_single>-1]
     acc_array_single = acc_array_single[acc_array_single>-1]
     u_t_array_single_right = u_t_array_single[acc_array_single == 1]
     u_t_array_single_wrong = u_t_array_single[acc_array_single == 0]
@@ -372,10 +378,11 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single_right = u_e_array_single[acc_array_single == 1]
     u_e_array_single_wrong = u_e_array_single[acc_array_single == 0]
 
+    breakpoint()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=target_prob_array,
         marker=dict(color=acc_array_single, colorbar=dict(title='Point prediction correctness'), colorscale='Viridis'),
-        mode='markers'))
+        mode='markers', text=target_label_array.tolist()))
     fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Assigned probability')
@@ -384,7 +391,7 @@ for ds, num_examples, ds_name in datasets:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
-        mode='markers'))
+        mode='markers', text=target_label_array.tolist()))
     fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
@@ -393,7 +400,7 @@ for ds, num_examples, ds_name in datasets:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_a_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
-        mode='markers'))
+        mode='markers', text=target_label_array.tolist()))
     fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Aleatoric uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
@@ -402,7 +409,7 @@ for ds, num_examples, ds_name in datasets:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_e_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
-        mode='markers'))
+        mode='markers', text=target_label_array.tolist()))
     fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Epistemic uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
