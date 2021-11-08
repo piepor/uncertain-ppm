@@ -99,11 +99,9 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
             log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ATTRIBUTE_PREFIX: 'case:'}
         event_log = log_converter.apply(log_csv, parameters=parameters,
                                         variant=log_converter.Variants.TO_EVENT_LOG)
-        random_indeces = random.sample(range(len(event_log)), len(event_log))
-        event_log_shuffled = [event_log[index] for index in random_indeces]
 
         return {
-            'train': self._generate_examples(event_log_shuffled),
+            'train': self._generate_examples(event_log),
         }
 
 

@@ -56,6 +56,11 @@ parser.add_argument('--plot_wrong_predictions', help='plot N output distribution
         default=0, type=int)
 parser.add_argument('--dataset_type', help='choose what segment of dataset to use between training, validation and test. Default is all',
         default='all', choices=['training', 'validation', 'test', 'all'])
+parser.add_argument('--model_type', help='choose the type of algorithm used to estimate uncertainty: MC dropout or ensamble. Default to ensamble',
+        default='ensamble', choices=['MC-dropout', 'ensamble'])
+parser.add_argument('--samples_number', help='number of sample for the MC dropout',
+        default=5, type=int)
+
 
 args = parser.parse_args()
 
@@ -75,6 +80,16 @@ if num_wrong_preds > 0:
 ds_type = args.dataset_type.lower()
 if not dataset in ['helpdesk']:
     raise ValueError('Dataset not available') 
+model_type = args.model_type
+if model_type == 'MC-dropout':
+    dropout = True
+elif model_type == 'ensamble':
+    dropout = False
+else:
+    raise ValueError('Model type not implemented')
+num_samples = args.samples_number
+if num_samples < 0:
+    raise ValueError('Number of samples must be positive')
 
 if dataset == 'helpdesk':
     ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
@@ -156,10 +171,11 @@ if len(models_names) == 0:
     raise OSError('No models are contained in {}'.format(model_dir))
 
 models = []
-for model_name in models_names:
-    model_path = os.path.join(model_dir, model_name)
-    model = tf.keras.models.load_model(model_path)
-    models.append(model)
+for num, model_name in enumerate(models_names):
+    if (model_type == 'ensamble') or (model_type == 'MC-dropout' and num == 0):
+        model_path = os.path.join(model_dir, model_name)
+        model = tf.keras.models.load_model(model_path)
+        models.append(model)
 
 for ds, num_examples, ds_name in datasets:
     if plot_entire_seqs or plot_wrong_preds:
@@ -186,16 +202,30 @@ for ds, num_examples, ds_name in datasets:
         mask = tf.math.logical_not(tf.math.equal(target_data, 0))
 
         u_a = 0
-        for i, model in enumerate(models):
-            out_prob = tf.nn.softmax(model(input_data))
-            if  i == 0:
-                out_prob_tot_distr = out_prob
-            else:
-                out_prob_tot_distr += out_prob
-            # compute aleatoric uncertainty
-            u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
+        if model_type == 'MC-dropout':
+            for i in range(num_samples):
+                out_prob = tf.nn.softmax(model(input_data, training=dropout))
+                if  i == 0:
+                    out_prob_tot_distr = out_prob
+                else:
+                    out_prob_tot_distr += out_prob
+                # compute aleatoric uncertainty
+                u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
 
-        out_prob_tot_distr /= len(models)
+            out_prob_tot_distr /= num_samples
+        
+        else:
+
+            for i, model in enumerate(models):
+                out_prob = tf.nn.softmax(model(input_data, training=dropout))
+                if  i == 0:
+                    out_prob_tot_distr = out_prob
+                else:
+                    out_prob_tot_distr += out_prob
+                # compute aleatoric uncertainty
+                u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
+
+            out_prob_tot_distr /= len(models)
 
         #breakpoint()
         acc = accuracy_function(target_data, out_prob_tot_distr)
@@ -207,8 +237,10 @@ for ds, num_examples, ds_name in datasets:
         target_prob = get_targets_probability(target_data, out_prob_tot_distr)
         target_prob_array = np.hstack([target_prob_array, target_prob.numpy().ravel()])
         #breakpoint()
-
-        u_a /= -len(models)
+        if model_type == 'MC-dropout':
+            u_a /= -num_samples
+        else:
+            u_a /= -len(models)
         u_a = np.where(mask, u_a, np.zeros(np.shape(u_a)))
         u_a_array_single = np.hstack([u_a_array_single, u_a.ravel()])
         # compute total uncertainty
@@ -263,7 +295,7 @@ for ds, num_examples, ds_name in datasets:
                                                  marker=dict(opacity=0.4), name='single model'),
                                           row=1, col=1)
                             fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob_tot_distr[num_row, j].numpy(),
-                                                 marker=dict(opacity=0.4), name='ensamble models'),
+                                                 marker=dict(opacity=0.4), name='{} models'.format(model_type)),
                                           row=1, col=1)
                             fig.add_trace(go.Bar(x=['Uncertainty'], y=[u_t[num_row, j]], name='Epistemic', offsetgroup=0),
                                           row=1, col=2)
@@ -302,26 +334,26 @@ for ds, num_examples, ds_name in datasets:
     group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
     hist_data = [u_t_array, u_a_array, u_e_array]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.02)
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_t_array, y=acc_array, mode='markers', name='Total uncertainty'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Mean sequence accuracy')
     fig.show(renderer='chromium')
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_a_array, y=acc_array, mode='markers', name='Aleatoric uncertainty'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_yaxes(title_text='Mean sequence accuracy')
     fig.update_xaxes(title_text='Aleatoric uncertainty')
     fig.show(renderer='chromium')
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_e_array, y=acc_array, mode='markers', name='Epistemic uncertainty'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_yaxes(title_text='Mean sequence accuracy')
     fig.update_xaxes(title_text='Epistemic uncertainty')
     fig.show(renderer='chromium')
@@ -344,7 +376,7 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=target_prob_array,
         marker=dict(color=acc_array_single, colorbar=dict(title='Point prediction correctness'), colorscale='Viridis'),
         mode='markers'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Assigned probability')
     fig.show(renderer='chromium')
@@ -353,7 +385,7 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
         mode='markers'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
@@ -362,7 +394,7 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Scatter(x=u_a_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
         mode='markers'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Aleatoric uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
@@ -371,7 +403,7 @@ for ds, num_examples, ds_name in datasets:
     fig.add_trace(go.Scatter(x=u_e_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
         marker=dict(color=target_prob_array, colorbar=dict(title='Assinged probability'), colorscale='Viridis'),
         mode='markers'))
-    fig.update_layout(title_text=ds_name.capitalize())
+    fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
     fig.update_xaxes(title_text='Epistemic uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
@@ -380,36 +412,51 @@ for ds, num_examples, ds_name in datasets:
     group_labels = ['Right predictions', 'Wrong predictions']
     hist_data = [u_t_array_single_right, u_t_array_single_wrong]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
-    fig.update_layout(title_text="{} - Total uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Total uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     hist_data = [u_a_array_single_right, u_a_array_single_wrong]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
-    fig.update_layout(title_text="{} - Aleatoric uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Aleatoric uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     hist_data = [u_e_array_single_right, u_e_array_single_wrong]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
-    fig.update_layout(title_text="{} - Epistemic uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Epistemic uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
 # Boxplot
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_t_array_single_right, name='Right predictions'))
     fig.add_trace(go.Box(y=u_t_array_single_wrong, name='Wrong predictions'))
-    fig.update_layout(title_text="{} - Total uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Total uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_a_array_single_right, name='Right predictions'))
     fig.add_trace(go.Box(y=u_a_array_single_wrong, name='Wrong predictions'))
-    fig.update_layout(title_text="{} - Aleatoric uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Aleatoric uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_e_array_single_right, name='Right predictions'))
     fig.add_trace(go.Box(y=u_e_array_single_wrong, name='Wrong predictions'))
-    fig.update_layout(title_text="{} - Epistemic uncertainty".format(ds_name.capitalize()))
+    fig.update_layout(title_text="{} - {} - Epistemic uncertainty".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_t_array_single, name='Total uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_a_array_single, name='Aleatoric uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
+    fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Box(y=u_e_array_single, name='Epistemic uncertainty'))
+    fig.update_layout(title_text="{} - {}".format(model_type.capitalize(), ds_name.capitalize()))
     fig.show(renderer='chromium')
 
     fig = go.Figure()
