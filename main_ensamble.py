@@ -10,6 +10,13 @@ import yaml
 import datetime
 import glob
 from shutil import copyfile
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('features', help='choose the dataset')
+
+args = parser.parse_args()
+features_name = args.features
 
 ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
 ds_vali = tfds.load('helpdesk', split='train[70%:85%]')
@@ -165,7 +172,8 @@ def compute_input_signature(features):
             train_step_signature.append(tf.TensorSpec(shape=(None, None), dtype=tf.int32))
     return train_step_signature
 
-features = compute_features('act_res_day_week_time.params', {'activity': vocabulary})
+#features_name = 'act_res_day_week_time.params'
+features = compute_features(features_name, {'activity': vocabulary})
 train_step_signature = compute_input_signature(features)
 output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
                                                  num_oov_indices=1)
@@ -183,7 +191,7 @@ for ensamble in ensamble_list:
         num = int(ensamble.split('_')[2])
 model_dir = 'models_ensamble/helpdesk/ensamble_{}'.format(int(num)+1)
 os.makedirs(model_dir)
-copyfile('act_res_day_week_time.params', os.path.join(model_dir, 'features.params'))
+copyfile(features_name, os.path.join(model_dir, 'features.params'))
 
 padded_shapes = {
     'activity': [None],
