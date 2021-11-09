@@ -38,7 +38,6 @@ def get_targets_probability(real, pred):
     target_prob = tf.reshape(mult[mult>0], (real.shape[0], real.shape[1]))
     return target_prob
     
-
 def compute_features(file_path, vocabularies):
     with open(file_path, 'r') as file:
         features = list(yaml.load_all(file, Loader=yaml.FullLoader))
@@ -177,11 +176,14 @@ for num, model_name in enumerate(models_names):
         model = tf.keras.models.load_model(model_path)
         models.append(model)
 
+count_seq = 0
+count_wrong = 0
 for ds, num_examples, ds_name in datasets:
     if plot_entire_seqs or plot_wrong_preds:
         count_seq = 0
         count_wrong = 0
         random_idx_plot = random.sample(range(num_examples), num_seq_entire)
+
     u_t_array_mean = np.zeros(1)
     u_t_array_single = np.zeros(1)
     u_a_array_mean = np.zeros(1)
@@ -274,19 +276,36 @@ for ds, num_examples, ds_name in datasets:
         u_t_array_mean = np.hstack([u_t_array_mean, mean_u_t])
         u_a_array_mean = np.hstack([u_a_array_mean, mean_u_a])
         u_e_array_mean = np.hstack([u_e_array_mean, mean_u_e])
+        #breakpoint()
+        check_cond_tot_unc_prob = np.logical_and(u_t<0.4, mask).any() and np.logical_and(acc_single<0.2, mask).any()
         check_cond_wrong = np.logical_and(acc_single==0.0, mask).any() and plot_wrong_preds and count_wrong<num_wrong_preds
         check_cond_entire = plot_entire_seqs and count_seq<num_seq_entire
         #breakpoint()
-        if check_cond_wrong or check_cond_entire:
+        if check_cond_wrong or check_cond_entire or check_cond_tot_unc_prob:
+            prob_unc_mask = np.logical_and(tf.math.less(acc_single, 0.2).numpy(), u_t<0.4)
+            prob_unc_mask = np.logical_and(prob_unc_mask, mask)
+            prob_unc_mask = np.ma.masked_equal(prob_unc_mask, True)
+            prob_unc_mask = np.ma.mask_rows(prob_unc_mask).mask
+            #if isinstance(prob_unc_mask, bool):
+            if not np.ma.masked_equal(prob_unc_mask, True).mask.any():
+                #breakpoint()
+                prob_unc_mask = np.zeros_like(acc_single)
+            #print(len(prob_unc_mask.shape))
             for num_row in range(acc_single.shape[0]):
                 check_cond_wrong_row = np.logical_and(acc_single[num_row, :]==0.0, mask[num_row, :]).any() and check_cond_wrong
-                check_cond_random_idx = (batch_idx * batch_size + num_row in random_idx_plot) 
-                if check_cond_wrong_row or check_cond_random_idx:
+                if plot_wrong_preds:
+                    check_cond_random_idx = (batch_idx * batch_size + num_row in random_idx_plot) 
+                else:
+                    check_cond_random_idx = False
+                #breakpoint()
+                #print(prob_unc_mask[num_row, 0])
+                #breakpoint()
+                if check_cond_wrong_row or check_cond_random_idx or prob_unc_mask[num_row, 0]:
                     act = ''
                     for j in range(target_data.shape[1]):
                         act += '{} - '.format(input_data[0][num_row, j].numpy().decode("utf-8"))
                         check_cond_wrong_single_pred = check_cond_wrong_row and acc_single[num_row, j] == 0.0 and count_wrong<num_wrong_preds
-                        if (check_cond_wrong_single_pred or check_cond_random_idx) and not target_data[num_row, j].numpy() == 0 :
+                        if (check_cond_wrong_single_pred or check_cond_random_idx) and not target_data[num_row, j].numpy() == 0 or prob_unc_mask[num_row, 0]:
                             target_numpy = np.zeros(len(vocabulary_plot))
                             target_numpy[target_data[num_row, j].numpy()] = 1
                             #fig = go.Figure()
@@ -335,6 +354,7 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single = u_e_array_single[ordered_acc_array]
     target_prob_array = target_prob_array[ordered_acc_array]
     target_label_array = target_label[ordered_acc_array]
+    #breakpoint()
 
     group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
     hist_data = [u_t_array, u_a_array, u_e_array]
@@ -378,7 +398,7 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single_right = u_e_array_single[acc_array_single == 1]
     u_e_array_single_wrong = u_e_array_single[acc_array_single == 0]
 
-    breakpoint()
+    #breakpoint()
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=target_prob_array,
         marker=dict(color=acc_array_single, colorbar=dict(title='Point prediction correctness'), colorscale='Viridis'),
