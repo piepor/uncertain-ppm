@@ -92,6 +92,7 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
         # Create the Event Log object as in the library pm4py
         log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
         log_csv = log_csv.sort_values('Complete Timestamp')
+        # Reindex to have case name reflecting the 
         log_csv.rename(columns={'Case ID': 'case:concept:name',
                                 'Complete Timestamp': 'time:timestamp'}, inplace=True)
         parameters = {
