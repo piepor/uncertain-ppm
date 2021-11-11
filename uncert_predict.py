@@ -11,6 +11,9 @@ import plotly.figure_factory as ff
 import argparse
 import re
 
+def combine_two_string(string1, string2):
+    return "{}-{}".format(string1, string2)
+
 def idx_to_int(tfds_id: str, builder):
     """Format the tfds_id in a more human-readable."""
     match = re.match(r'\w+-(\w+).\w+-(\d+)-of-\d+__(\d+)', tfds_id)
@@ -64,7 +67,7 @@ parser.add_argument('--model_type', help='choose the type of algorithm used to e
 parser.add_argument('--samples_number', help='number of sample for the MC dropout',
         default=5, type=int)
 parser.add_argument('--uncertainty_threshold', help='uncertainty threshold to select cases', 
-        default=0.4, type=int)
+        default=0.4, type=float)
 parser.add_argument('--plot_cases_threshold', help='plot cases below the threshold', 
         default=False, type=bool)
 parser.add_argument('--save_cases_threshold', help='save cases below the threshold', 
@@ -158,7 +161,8 @@ if dataset == 'helpdesk':
         'variant': [None],    
         'relative_time': [None],
         'day_part': [None],
-        'week_day': [None]
+        'week_day': [None],
+        'tfds_id': (),
     }
     padding_values = {
         'activity': '<PAD>',
@@ -174,11 +178,13 @@ if dataset == 'helpdesk':
         'relative_time': tf.cast(0, dtype=tf.int32),
         'day_part': tf.cast(0, dtype=tf.int64),
         'week_day': tf.cast(0, dtype=tf.int64),
+        'tfds_id': '<PAD>',
     }
 
 
     features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
     batch_size = 64
+    #breakpoint()
     padded_ds_train = ds_train.padded_batch(batch_size, 
             padded_shapes=padded_shapes,
             padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
@@ -234,13 +240,21 @@ for ds, num_examples, ds_name in datasets:
     acc_array_single = np.zeros(1)
     target_prob_array = np.zeros(1)
     target_label = np.asarray(['0'])
+    target_case = np.asarray(['0'])
     for batch_idx, batch_data in enumerate(ds):
 
         input_data = []
         for feature in features:
             input_data.append(batch_data[feature['name']][:, :-1])
         target_data = batch_data['activity'][:, 1:]
+        #breakpoint()
+        exs = [ex.numpy().decode('utf-8') for ex in batch_data['tfds_id']]
+        target_data_case = [idx_to_int(tfds_id, builder_helpdesk) for tfds_id in exs] 
+        target_data_case = target_data_case * np.ones_like(target_data).T
+        target_data_case = target_data_case.T
         target_label = np.hstack([target_label, target_data.numpy().ravel()]) 
+        #breakpoint()
+        target_case = np.hstack([target_case, target_data_case.ravel()]) 
         target_data = output_preprocess(target_data)
         mask = tf.math.logical_not(tf.math.equal(target_data, 0))
 
@@ -373,6 +387,7 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single = u_e_array_single[1:]
     target_prob_array = target_prob_array[1:]
     target_label = target_label[1:]
+    target_case = target_case[1:]
     #breakpoint()
 # ordering
     ordered_acc_array = acc_array_single.argsort()
@@ -382,12 +397,13 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single = u_e_array_single[ordered_acc_array]
     target_prob_array = target_prob_array[ordered_acc_array]
     target_label_array = target_label[ordered_acc_array]
+    target_case_array = target_case[ordered_acc_array]
     #breakpoint()
 
     if plot_distr:
         group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
-        hist_data = [u_t_array, u_a_array, u_e_array]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.02)
+        hist_data = [u_t_array_single, u_a_array_single, u_e_array_single]
+        fig = ff.create_distplot(hist_data, group_labels, bin_size=.2)
         fig.update_layout(title_text='Model {} - {} - {}'.format(
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.show(renderer='chromium')
@@ -424,6 +440,7 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single = u_e_array_single[acc_array_single>-1]
     target_prob_array = target_prob_array[acc_array_single>-1]
     target_label_array = target_label_array[acc_array_single>-1]
+    target_case_array = target_case_array[acc_array_single>-1]
     acc_array_single = acc_array_single[acc_array_single>-1]
     u_t_array_single_right = u_t_array_single[acc_array_single == 1]
     u_t_array_single_wrong = u_t_array_single[acc_array_single == 0]
@@ -434,6 +451,8 @@ for ds, num_examples, ds_name in datasets:
 
     #breakpoint()
     if plot_event_acc:
+        total_label = list(map(combine_two_string, target_case_array, target_label_array))
+        #breakpoint()
         fig = go.Figure()
 #        fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=target_prob_array,
 #            marker=dict(color=acc_array_single, colorbar=dict(title='Point prediction correctness'), colorscale='Viridis'),
@@ -442,10 +461,13 @@ for ds, num_examples, ds_name in datasets:
 #        fig.update_xaxes(title_text='Total uncertainty')
 #        fig.update_yaxes(title_text='Assigned probability')
 #        fig.show(renderer='chromium')
+
+        #fig.add_trace(go.Scatter(x=u_t_array_single_right, y=target_prob_array[acc_array_single==1],
+        #    mode='markers', text=target_label_array.tolist(), name='right prediction'))
         fig.add_trace(go.Scatter(x=u_t_array_single_right, y=target_prob_array[acc_array_single==1],
-            mode='markers', text=target_label_array.tolist(), name='right prediction'))
+            mode='markers', text=total_label, name='right prediction'))
         fig.add_trace(go.Scatter(x=u_t_array_single_wrong, y=target_prob_array[acc_array_single==0],
-            mode='markers', text=target_label_array.tolist(), name='wrong prediction'))
+            mode='markers', text=total_label, name='wrong prediction'))
         fig.update_layout(title_text='Model {} - {} - {}'.format(
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.update_xaxes(title_text='Total uncertainty')
@@ -509,19 +531,19 @@ for ds, num_examples, ds_name in datasets:
     if plot_distr:
         group_labels = ['Right predictions', 'Wrong predictions']
         hist_data = [u_t_array_single_right, u_t_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
+        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
         fig.update_layout(title_text="Model {} - {} - {} - Total uncertainty".format(
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.show(renderer='chromium')
 
         hist_data = [u_a_array_single_right, u_a_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
+        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
         fig.update_layout(title_text="Model {} - {} - {} - Aleatoric uncertainty".format(
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.show(renderer='chromium')
 
         hist_data = [u_e_array_single_right, u_e_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.002)
+        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
         fig.update_layout(title_text="Model {} - {} - {} - Epistemic uncertainty".format(
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.show(renderer='chromium')

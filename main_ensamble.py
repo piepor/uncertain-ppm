@@ -13,7 +13,8 @@ from shutil import copyfile
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('features', help='choose the dataset')
+parser.add_argument('features', 
+                    help='yaml file specifying training features (e.g. act_res_time.params)')
 
 args = parser.parse_args()
 features_name = args.features
@@ -234,7 +235,8 @@ num_models_ensamble = 5
 
 padded_ds = ds_train.padded_batch(batch_size, 
         padded_shapes=padded_shapes,
-        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+        padding_values=padding_values).shuffle(buffer_size=10000, 
+                                               reshuffle_each_iteration=True).prefetch(tf.data.AUTOTUNE)
 padded_ds_vali = ds_vali.padded_batch(batch_size, 
                                       padded_shapes=padded_shapes,
                                       padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
@@ -354,6 +356,7 @@ for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, 
             target_data = output_preprocess(args[0][0][:, 1:])
             logits = model(input_data, training=False) 
             return logits, target_data
+        #breakpoint()
         if n == 0:
             logits_total, target_data = vali_step_ensamble(input_data)
         else:

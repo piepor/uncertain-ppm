@@ -7,6 +7,7 @@ from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.log.util import dataframe_utils
 import pandas as pd
 import random
+import numpy as np
 
 _DESCRIPTION = """
 
@@ -92,9 +93,12 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
         # Create the Event Log object as in the library pm4py
         log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
         log_csv = log_csv.sort_values('Complete Timestamp')
-        # Reindex to have case name reflecting the 
-        log_csv.rename(columns={'Case ID': 'case:concept:name',
-                                'Complete Timestamp': 'time:timestamp'}, inplace=True)
+        # Mapping case name reflecting temporal order
+        case_ids = log_csv.drop_duplicates('Case ID')
+        case_ids['case:concept:name'] = np.arange(1, len(case_ids)+1)
+        mapping = dict(zip(case_ids['Case ID'], case_ids['case:concept:name'].map(str)))
+        log_csv['case:concept:name'] = log_csv['Case ID'].map(mapping)  
+        log_csv.rename(columns={'Complete Timestamp': 'time:timestamp'}, inplace=True)
         parameters = {
             log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ID_KEY: 'case:concept:name',
             log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ATTRIBUTE_PREFIX: 'case:'}
@@ -124,6 +128,7 @@ class Helpdesk(tfds.core.GeneratorBasedBuilder):
                          'relative_time': preprocessed_trace['relative_time'],
                          'day_part': preprocessed_trace['day_part'],
                          'week_day': preprocessed_trace['week_day']}
+                         
 
 def preprocess_trace(trace):
     """
@@ -142,24 +147,23 @@ def preprocess_trace(trace):
             trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
             trace_properties['variant'] = [event['Variant index']]
             trace_properties['customer'] = [int(event['customer'].split()[1])]
-        else:
-            delta_t = event['time:timestamp'] - event_date
-            event_date = event['time:timestamp']
-            trace_properties['activity'].append(event['Activity'])
-            trace_properties['resource'].append(int(event['Resource'].split()[1])+1)
-            trace_properties['product'].append(int(event['product'].split()[1])+1)
-            trace_properties['customer'].append(int(event['customer'].split()[1]))
-            trace_properties['responsible_section'].append(
-                int(event['responsible_section'].split()[1])+1)
-            trace_properties['service_level'].append(int(event['service_level'].split()[1])+1)
-            trace_properties['service_type'].append(int(event['service_type'].split()[1])+1)
-            trace_properties['workgroup'].append(int(event['workgroup'].split()[1])+1)
-            trace_properties['variant'].append(event['Variant index'])
-            trace_properties['seriousness'].append(int(event['seriousness_2'].split()[1])+1)
-            trace_properties['relative_time'].append(delta_t.seconds)
-            trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
-            trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
-            event_date = event['time:timestamp']
+        delta_t = event['time:timestamp'] - event_date
+        event_date = event['time:timestamp']
+        trace_properties['activity'].append(event['Activity'])
+        trace_properties['resource'].append(int(event['Resource'].split()[1])+1)
+        trace_properties['product'].append(int(event['product'].split()[1])+1)
+        trace_properties['customer'].append(int(event['customer'].split()[1]))
+        trace_properties['responsible_section'].append(
+            int(event['responsible_section'].split()[1])+1)
+        trace_properties['service_level'].append(int(event['service_level'].split()[1])+1)
+        trace_properties['service_type'].append(int(event['service_type'].split()[1])+1)
+        trace_properties['workgroup'].append(int(event['workgroup'].split()[1])+1)
+        trace_properties['variant'].append(event['Variant index'])
+        trace_properties['seriousness'].append(int(event['seriousness_2'].split()[1])+1)
+        trace_properties['relative_time'].append(delta_t.seconds)
+        trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
+        trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
+        event_date = event['time:timestamp']
 
     trace_properties['activity'].append('<END>')
     trace_properties['resource'].append(1)
