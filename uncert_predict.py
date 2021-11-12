@@ -239,6 +239,7 @@ for ds, num_examples, ds_name in datasets:
     acc_array_mean = np.zeros(1)
     acc_array_single = np.zeros(1)
     target_prob_array = np.zeros(1)
+    max_prob_event_array = np.zeros(1)
     target_label = np.asarray(['0'])
     target_case = np.asarray(['0'])
     for batch_idx, batch_data in enumerate(ds):
@@ -286,6 +287,8 @@ for ds, num_examples, ds_name in datasets:
 
         acc = accuracy_function(target_data, out_prob_tot_distr)
         acc_array_mean = np.hstack([acc_array_mean, acc])
+        max_prob_event = tf.reduce_max(out_prob_tot_distr, axis=2)
+        max_prob_event_array = np.hstack([max_prob_event_array, max_prob_event.numpy().ravel()])
 
         acc_single = single_accuracies(target_data, out_prob_tot_distr)
         acc_array_single = np.hstack([acc_array_single, acc_single.numpy().ravel()])
@@ -388,6 +391,7 @@ for ds, num_examples, ds_name in datasets:
     target_prob_array = target_prob_array[1:]
     target_label = target_label[1:]
     target_case = target_case[1:]
+    max_prob_event_array = max_prob_event_array[1:]
     #breakpoint()
 # ordering
     ordered_acc_array = acc_array_single.argsort()
@@ -397,6 +401,7 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single = u_e_array_single[ordered_acc_array]
     target_prob_array = target_prob_array[ordered_acc_array]
     target_label_array = target_label[ordered_acc_array]
+    max_prob_event_array = max_prob_event_array[ordered_acc_array]
     target_case_array = target_case[ordered_acc_array]
     #breakpoint()
 
@@ -441,6 +446,7 @@ for ds, num_examples, ds_name in datasets:
     target_prob_array = target_prob_array[acc_array_single>-1]
     target_label_array = target_label_array[acc_array_single>-1]
     target_case_array = target_case_array[acc_array_single>-1]
+    max_prob_event_array = max_prob_event_array[acc_array_single>-1]
     acc_array_single = acc_array_single[acc_array_single>-1]
     u_t_array_single_right = u_t_array_single[acc_array_single == 1]
     u_t_array_single_wrong = u_t_array_single[acc_array_single == 0]
@@ -448,6 +454,34 @@ for ds, num_examples, ds_name in datasets:
     u_a_array_single_wrong = u_a_array_single[acc_array_single == 0]
     u_e_array_single_right = u_e_array_single[acc_array_single == 1]
     u_e_array_single_wrong = u_e_array_single[acc_array_single == 0]
+    # Compute bins to highligth percentage of wrong and right prediction
+    bin_size_perc = 0.15
+    max_unc = np.max(u_t_array_single)
+    num_bins = int(np.ceil(max_unc / bin_size_perc))
+    perc_right_plot = []
+    perc_wrong_plot = []
+    u_t_plot = []
+    for count_bin in np.arange(0, max_unc, bin_size_perc):
+        #breakpoint()
+        tot_pred = u_t_array_single[
+            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
+        acc_pred = acc_array_single[
+            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
+        #breakpoint()
+        perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
+        perc_wrong = 1 - perc_right
+        perc_data_tot = len(tot_pred) / len(u_t_array_single)
+        perc_right_plot.append(perc_right*perc_data_tot)
+        perc_wrong_plot.append(perc_wrong*perc_data_tot)
+        u_t_plot.append(bin_size_perc)
+    #breakpoint()
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_right_plot, 
+                         name='right predictions'))
+    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_wrong_plot,
+                         name='wrong predictions'))
+    fig.update_layout(title_text='prova', barmode='stack')
+    fig.show(renderer='chromium')
 
     #breakpoint()
     if plot_event_acc:
@@ -494,6 +528,17 @@ for ds, num_examples, ds_name in datasets:
             model_number, model_type.capitalize(), ds_name.capitalize()))
         fig.update_xaxes(title_text='Epistemic uncertainty')
         fig.update_yaxes(title_text='Assigned probability')
+        fig.show(renderer='chromium')
+
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=u_t_array_single_right, y=max_prob_event_array[acc_array_single==1],
+            mode='markers', text=total_label, name='right prediction'))
+        fig.add_trace(go.Scatter(x=u_t_array_single_wrong, y=max_prob_event_array[acc_array_single==0],
+            mode='markers', text=total_label, name='wrong prediction'))
+        fig.update_layout(title_text='Model {} - {} - {}'.format(
+            model_number, model_type.capitalize(), ds_name.capitalize()))
+        fig.update_xaxes(title_text='Total uncertainty')
+        fig.update_yaxes(title_text='Max probability predicted')
         fig.show(renderer='chromium')
 
     if plot_event_corr:
