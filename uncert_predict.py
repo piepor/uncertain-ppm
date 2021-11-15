@@ -14,16 +14,24 @@ import re
 def combine_two_string(string1, string2):
     return "{}-{}".format(string1, string2)
 
-def reliability_diagram(target, predicted_probs, bins=0.05):
-    breakpoint()
-    out_dict = set()
+def reliability_diagram(target, predicted_probs, rel_dict, bins=0.05):
+    #breakpoint()
+    #out_dict = dict()
+    count_bin = 0
     for num_bin in np.arange(0, 1, bins):
-        masked = np.ma.masked_outside(num_bin, num_bin+bins, np.max(predicted_probs, axis=2)) 
+        masked = np.ma.masked_outside(np.max(predicted_probs, axis=2), num_bin, num_bin+bins) 
         acc = np.equal(target, np.argmax(predicted_probs, axis=2))
-        acc = np.ma.masked_array(acc, masked.mask)
-        acc = acc.mean()
-        out_dict.add(((num_bin, num_bin+bins), acc))
-    return out_dict
+        acc = np.ma.masked_array(acc, masked.mask, fill_value=-1)
+        acc = acc.mean().data.tolist()
+        #out_set.add(((num_bin, num_bin+bins), acc))
+        count_bin += 1
+        if 'bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins) in rel_dict.keys():
+            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)].append(acc)
+        else:
+            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)] = [acc]
+        #    out_dict['bin{}'.format(count_bin)].append(rel_dict['bin{}'.format(count_bin)]
+        #    out_dict['bin{}'.format(count_bin)] /= 2
+    return rel_dict
 
 def idx_to_int(tfds_id: str, builder):
     """Format the tfds_id in a more human-readable."""
@@ -253,6 +261,8 @@ for ds, num_examples, ds_name in datasets:
     max_prob_event_array = np.zeros(1)
     target_label = np.asarray(['0'])
     target_case = np.asarray(['0'])
+    rel_dict = dict()
+    rel_dict_one_model = dict()
     for batch_idx, batch_data in enumerate(ds):
 
         input_data = []
@@ -296,7 +306,10 @@ for ds, num_examples, ds_name in datasets:
 
             out_prob_tot_distr /= len(models)
 
-        reliability_diagram(target_data, out_prob_tot_distr)
+        rel_bins = 0.05
+        rel_dict = reliability_diagram(target_data.numpy(), out_prob_tot_distr.numpy(), rel_dict, rel_bins)
+        rel_dict_one_model = reliability_diagram(target_data.numpy(), out_prob.numpy(), rel_dict_one_model, rel_bins)
+        #breakpoint()
         acc = accuracy_function(target_data, out_prob_tot_distr)
         acc_array_mean = np.hstack([acc_array_mean, acc])
         max_prob_event = tf.reduce_max(out_prob_tot_distr, axis=2)
@@ -391,6 +404,24 @@ for ds, num_examples, ds_name in datasets:
 #                    print("Mean aleatoric uncertainty: {}".format(mean_u_a[i]))
 #                    print("Mean epistemic uncertainty: {}".format(mean_u_e[i]))
                     #breakpoint()
+    rel_bin_plot = []
+    rel_acc_plot = []
+    rel_acc_plot_one_model = []
+    for key in rel_dict.keys():
+        rel_bin_plot.append(rel_bins)
+        rel_acc_plot.append(np.mean(rel_dict[key]))
+        rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key]))
+    #breakpoint()
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot, 
+                         width=rel_bin_plot, offset=0, name='ensamble', opacity=0.7))
+    fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot_one_model, 
+                         width=rel_bin_plot, offset=0, name='one model', opacity=0.7))
+    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color='black', dash='dash')))
+    fig.update_layout(title_text='reliability diagram')
+    fig.update_xaxes(title_text='Confidence')
+    fig.update_yaxes(title_text='Accuracy')
+    fig.show(renderer='chromium')
 
     u_t_array = u_t_array_mean[1:]
     u_a_array = u_a_array_mean[1:]
@@ -473,6 +504,8 @@ for ds, num_examples, ds_name in datasets:
     perc_right_plot = []
     perc_wrong_plot = []
     u_t_plot = []
+    acc_plot = []
+    perc_data = []
     for count_bin in np.arange(0, max_unc, bin_size_perc):
         #breakpoint()
         tot_pred = u_t_array_single[
@@ -480,20 +513,33 @@ for ds, num_examples, ds_name in datasets:
         acc_pred = acc_array_single[
             (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
         #breakpoint()
+        acc_plot.append(np.mean(acc_pred))
         perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
         perc_wrong = 1 - perc_right
         perc_data_tot = len(tot_pred) / len(u_t_array_single)
+        perc_data.append(perc_data_tot)
         perc_right_plot.append(perc_right*perc_data_tot)
         perc_wrong_plot.append(perc_wrong*perc_data_tot)
         u_t_plot.append(bin_size_perc)
     #breakpoint()
     fig = go.Figure()
     fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_right_plot, 
-                         name='right predictions'))
+                         width=u_t_plot, offset=0, name='right predictions'))
     fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_wrong_plot,
-                         name='wrong predictions'))
+                         width=u_t_plot, offset=0, name='wrong predictions'))
     fig.update_layout(title_text='prova', barmode='stack')
     fig.show(renderer='chromium')
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=acc_plot, 
+                         width=u_t_plot, offset=0, name='accuracy'))
+    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_data, 
+                         width=u_t_plot, offset=0, name='data percentage'))
+    fig.update_layout(title_text='prova')
+    fig.update_xaxes(title_text='total uncertainty')
+    fig.update_yaxes(title_text='accuracy')
+    fig.show(renderer='chromium')
+    
 
     #breakpoint()
     if plot_event_acc:
