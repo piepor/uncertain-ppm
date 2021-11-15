@@ -14,6 +14,17 @@ import re
 def combine_two_string(string1, string2):
     return "{}-{}".format(string1, string2)
 
+def reliability_diagram(target, predicted_probs, bins=0.05):
+    breakpoint()
+    out_dict = set()
+    for num_bin in np.arange(0, 1, bins):
+        masked = np.ma.masked_outside(num_bin, num_bin+bins, np.max(predicted_probs, axis=2)) 
+        acc = np.equal(target, np.argmax(predicted_probs, axis=2))
+        acc = np.ma.masked_array(acc, masked.mask)
+        acc = acc.mean()
+        out_dict.add(((num_bin, num_bin+bins), acc))
+    return out_dict
+
 def idx_to_int(tfds_id: str, builder):
     """Format the tfds_id in a more human-readable."""
     match = re.match(r'\w+-(\w+).\w+-(\d+)-of-\d+__(\d+)', tfds_id)
@@ -285,6 +296,7 @@ for ds, num_examples, ds_name in datasets:
 
             out_prob_tot_distr /= len(models)
 
+        reliability_diagram(target_data, out_prob_tot_distr)
         acc = accuracy_function(target_data, out_prob_tot_distr)
         acc_array_mean = np.hstack([acc_array_mean, acc])
         max_prob_event = tf.reduce_max(out_prob_tot_distr, axis=2)
