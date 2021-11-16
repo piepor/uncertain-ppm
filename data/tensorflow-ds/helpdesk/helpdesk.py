@@ -163,7 +163,6 @@ def preprocess_trace(trace):
         trace_properties['relative_time'].append(delta_t.seconds)
         trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
         trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
-        event_date = event['time:timestamp']
 
     trace_properties['activity'].append('<END>')
     trace_properties['resource'].append(1)

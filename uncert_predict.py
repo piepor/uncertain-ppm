@@ -93,13 +93,20 @@ parser.add_argument('--save_cases_threshold', help='save cases below the thresho
         default=False, type=bool)
 parser.add_argument('--plot_mean_accuracy_vs_uncertainty', help='plot mean seqeunces accuracy vs uncertainty', 
         default=False, type=bool)
-parser.add_argument('--plot_event_accuracy_vs_uncertainty', help='plot single event accuracy vs uncertainty', 
+parser.add_argument('--plot_event_probability_vs_uncertainty', help='plot single event accuracy vs uncertainty', 
         default=True, type=bool)
 parser.add_argument('--plot_event_correctness_vs_uncertainty', help='plot single event correctness vs uncertainty', 
         default=False, type=bool)
 parser.add_argument('--plot_box_plot_uncertainty', help='plot box plot of uncertainties', 
         default=True, type=bool)
 parser.add_argument('--plot_distributions', help='plot distribution of uncertainties', 
+        default=False, type=bool)
+parser.add_argument('--plot_reliability_diagram', help='plot reliability diagram', 
+        default=True, type=bool)
+parser.add_argument('--plot_accuracy_vs_uncertainty', help='box plot of accuracy vs uncertainty', 
+        default=True, type=bool)
+parser.add_argument('--plot_proportions', 
+                    help='box plot of right and wrong predictions normalize with the percentage of data in bin.', 
         default=False, type=bool)
 
 # Parse and check arguments
@@ -141,10 +148,14 @@ acc_threshold = 0.5
 
 # plot stats
 plot_mean_acc = args.plot_mean_accuracy_vs_uncertainty
-plot_event_acc = args.plot_event_accuracy_vs_uncertainty
+plot_event_prob = args.plot_event_probability_vs_uncertainty
 plot_event_corr = args.plot_event_correctness_vs_uncertainty
 plot_box_plot = args.plot_box_plot_uncertainty
 plot_distr = args.plot_distributions
+plot_reliability_diagram = args.plot_reliability_diagram
+plot_acc_unc = args.plot_accuracy_vs_uncertainty
+plot_acc_unc = args.plot_accuracy_vs_uncertainty
+plot_proportions = args.plot_proportions
 
 # Start analysis - import dataset
 # change read config in order to return also the case id
@@ -152,9 +163,6 @@ read_config = tfds.ReadConfig()
 read_config.add_tfds_id = True
 if dataset == 'helpdesk':
     builder_helpdesk = tfds.builder('helpdesk')
-#    ds_train = tfds.load('helpdesk', split='train[:70%]', shuffle_files=True)
-#    ds_vali = tfds.load('helpdesk', split='train[70%:85%]')
-#    ds_test = tfds.load('helpdesk', split='train[85%:]')
     ds_train = builder_helpdesk.as_dataset(read_config=read_config, split='train[:70%]')
     ds_vali = builder_helpdesk.as_dataset(read_config=read_config, split='train[70%:85%]')
     ds_test = builder_helpdesk.as_dataset(read_config=read_config, split='train[85%:]')
@@ -404,24 +412,27 @@ for ds, num_examples, ds_name in datasets:
 #                    print("Mean aleatoric uncertainty: {}".format(mean_u_a[i]))
 #                    print("Mean epistemic uncertainty: {}".format(mean_u_e[i]))
                     #breakpoint()
-    rel_bin_plot = []
-    rel_acc_plot = []
-    rel_acc_plot_one_model = []
-    for key in rel_dict.keys():
-        rel_bin_plot.append(rel_bins)
-        rel_acc_plot.append(np.mean(rel_dict[key]))
-        rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key]))
-    #breakpoint()
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot, 
-                         width=rel_bin_plot, offset=0, name='ensamble', opacity=0.7))
-    fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot_one_model, 
-                         width=rel_bin_plot, offset=0, name='one model', opacity=0.7))
-    fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color='black', dash='dash')))
-    fig.update_layout(title_text='reliability diagram')
-    fig.update_xaxes(title_text='Confidence')
-    fig.update_yaxes(title_text='Accuracy')
-    fig.show(renderer='chromium')
+
+    if plot_reliability_diagram:
+        rel_bin_plot = []
+        rel_acc_plot = []
+        rel_acc_plot_one_model = []
+        for key in rel_dict.keys():
+            rel_bin_plot.append(rel_bins)
+            rel_acc_plot.append(np.mean(rel_dict[key]))
+            rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key]))
+        #breakpoint()
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot, 
+                             width=rel_bin_plot, offset=0, name='ensamble', opacity=0.7))
+        fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot_one_model, 
+                             width=rel_bin_plot, offset=0, name='one model', opacity=0.7))
+        fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color='black', dash='dash')))
+        fig.update_layout(title_text='Reliability Diagram - Model {} - {} - {}'.format(
+            model_number, model_type.capitalize(), ds_name.capitalize()))
+        fig.update_xaxes(title_text='Confidence')
+        fig.update_yaxes(title_text='Accuracy')
+        fig.show(renderer='chromium')
 
     u_t_array = u_t_array_mean[1:]
     u_a_array = u_a_array_mean[1:]
@@ -507,12 +518,10 @@ for ds, num_examples, ds_name in datasets:
     acc_plot = []
     perc_data = []
     for count_bin in np.arange(0, max_unc, bin_size_perc):
-        #breakpoint()
         tot_pred = u_t_array_single[
             (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
         acc_pred = acc_array_single[
             (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        #breakpoint()
         acc_plot.append(np.mean(acc_pred))
         perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
         perc_wrong = 1 - perc_right
@@ -521,41 +530,33 @@ for ds, num_examples, ds_name in datasets:
         perc_right_plot.append(perc_right*perc_data_tot)
         perc_wrong_plot.append(perc_wrong*perc_data_tot)
         u_t_plot.append(bin_size_perc)
-    #breakpoint()
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_right_plot, 
-                         width=u_t_plot, offset=0, name='right predictions'))
-    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_wrong_plot,
-                         width=u_t_plot, offset=0, name='wrong predictions'))
-    fig.update_layout(title_text='prova', barmode='stack')
-    fig.show(renderer='chromium')
 
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=acc_plot, 
-                         width=u_t_plot, offset=0, name='accuracy'))
-    fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_data, 
-                         width=u_t_plot, offset=0, name='data percentage'))
-    fig.update_layout(title_text='prova')
-    fig.update_xaxes(title_text='total uncertainty')
-    fig.update_yaxes(title_text='accuracy')
-    fig.show(renderer='chromium')
-    
-
-    #breakpoint()
-    if plot_event_acc:
-        total_label = list(map(combine_two_string, target_case_array, target_label_array))
-        #breakpoint()
+    if plot_proportions:
         fig = go.Figure()
-#        fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=target_prob_array,
-#            marker=dict(color=acc_array_single, colorbar=dict(title='Point prediction correctness'), colorscale='Viridis'),
-#            mode='markers', text=target_label_array.tolist()))
-#        fig.update_layout(title_text='{} - {}'.format(model_type.capitalize(), ds_name.capitalize()))
-#        fig.update_xaxes(title_text='Total uncertainty')
-#        fig.update_yaxes(title_text='Assigned probability')
-#        fig.show(renderer='chromium')
+        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_right_plot, 
+                             width=u_t_plot, offset=0, name='right predictions'))
+        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_wrong_plot,
+                             width=u_t_plot, offset=0, name='wrong predictions'))
+        fig.update_layout(title_text='Model {} - {} - {}'.format(
+            model_number, model_type.capitalize(), ds_name.capitalize()))
+        fig.show(renderer='chromium')
 
-        #fig.add_trace(go.Scatter(x=u_t_array_single_right, y=target_prob_array[acc_array_single==1],
-        #    mode='markers', text=target_label_array.tolist(), name='right prediction'))
+    if plot_acc_unc:
+        fig = go.Figure()
+        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=acc_plot, 
+                             width=u_t_plot, offset=0, name='accuracy'))
+        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_data, 
+                             width=u_t_plot, offset=0, name='data percentage'))
+        fig.update_layout(title_text='Model {} - {} - {}'.format(
+            model_number, model_type.capitalize(), ds_name.capitalize()))
+        fig.update_xaxes(title_text='total uncertainty')
+        fig.update_yaxes(title_text='accuracy')
+        fig.show(renderer='chromium')
+
+    if plot_event_prob:
+        total_label = list(map(combine_two_string, target_case_array, target_label_array))
+
+        fig = go.Figure()
         fig.add_trace(go.Scatter(x=u_t_array_single_right, y=target_prob_array[acc_array_single==1],
             mode='markers', text=total_label, name='right prediction'))
         fig.add_trace(go.Scatter(x=u_t_array_single_wrong, y=target_prob_array[acc_array_single==0],
