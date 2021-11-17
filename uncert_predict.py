@@ -73,7 +73,8 @@ def compute_features(file_path, vocabularies):
     return features
 
 parser = argparse.ArgumentParser()
-parser.add_argument('dataset', help='choose the dataset')
+parser.add_argument('dataset', help='choose the dataset',
+                    choices=['helpdesk'])
 parser.add_argument('model_directory', help='directory where the ensamble models are saved')
 parser.add_argument('--plot_entire_sequences', help='plot the output distribution of N random sequences',
         default=0, type=int)
