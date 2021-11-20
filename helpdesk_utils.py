@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def helpdesk_utils():
+def helpdesk_utils(tfds_id):
     padded_shapes = {
         'activity': [None],
         'resource': [None],
@@ -31,6 +31,9 @@ def helpdesk_utils():
         'day_part': tf.cast(0, dtype=tf.int64),
         'week_day': tf.cast(0, dtype=tf.int64),
     }
+    if tfds_id:
+        padded_shapes['tfds_id'] = ()
+        padding_values['tfds_id'] = '<PAD>'
 
     vocabulary = ['<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
                   'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',

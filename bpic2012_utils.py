@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def bpic2012_utils():
+def bpic2012_utils(tfds_id):
     padded_shapes = {
         'activity': [None],
         'resource': [None],
@@ -17,6 +17,9 @@ def bpic2012_utils():
         'day_part': tf.cast(0, dtype=tf.int64),
         'week_day': tf.cast(0, dtype=tf.int64),
     }
+    if tfds_id:
+        padded_shapes['tfds_id'] = ()
+        padding_values['tfds_id'] = '<PAD>'
     vocabulary_act = ['<START>',  '<END>', 'A_CANCELLED_COMPLETE', 'A_DECLINED_COMPLETE', 
                       'A_APPROVED_COMPLETE', 'A_REGISTERED_COMPLETE', 'A_ACCEPTED_COMPLETE',
                       'A_PARTLYSUBMITTED_COMPLETE', 'A_FINALIZED_COMPLETE', 'A_PREACCEPTED_COMPLETE',

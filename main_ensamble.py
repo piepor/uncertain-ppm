@@ -23,6 +23,8 @@ parser.add_argument('--num_heads', help='number of heads in multi-head attention
                     default=2, type=int)
 parser.add_argument('--feed_forward_dim', help='units in feed forward layers',
                     default=512, type=int)
+parser.add_argument('--num_layers', help='number of layers',
+                    default=1, type=int)
 parser.add_argument('--epochs', help='number of training epochs',
                     default=100, type=int)
 parser.add_argument('--patience', help='epochs of patience before stopping the training',
@@ -37,6 +39,7 @@ dataset = args.dataset
 features_name = os.path.join('models_features', dataset, args.features)
 num_heads = args.num_heads
 feed_forward_dim = args.feed_forward_dim
+num_layers = args.num_layers
 epochs = args.epochs
 patience = args.patience
 batch_size = args.batch_size
@@ -99,7 +102,7 @@ for _ in range(num_models_ensamble):
     vali_loss = tf.keras.metrics.Mean(name='vali_loss')
     vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
 
-    model = GeneralModel(1, features, ds_train, embed_dim, num_heads, feed_forward_dim, features[0]['input-dim'])
+    model = GeneralModel(num_layers, features, ds_train, embed_dim, num_heads, feed_forward_dim, features[0]['input-dim'])
 
     @tf.function(input_signature=[train_step_signature])
     def train_step(*args):
@@ -199,3 +202,14 @@ for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, 
     vali_accuracy_ensamble(accuracy_function(target_data, logits_total))
 
 print(vali_accuracy_ensamble.result())
+
+# save results and model characteristics in file
+with open(os.path.join(model_dir, "model_properties_results.txt"), "a") as file:
+    file.write("Number of heads: {}\n".format(num_heads))
+    file.write("Feed forward dimension: {}\n".format(feed_forward_dim))
+    file.write("Number of layers: {}\n".format(num_layers))
+    file.write("Number of epochs: {}\n".format(epochs))
+    file.write("Epochs of patience: {}\n".format(patience))
+    file.write("Size of batches: {}\n".format(batch_size))
+    file.write("Number of ensamble models: {}\n".format(num_models_ensamble))
+    file.write("Final validation accuracy: {}\n".format(vali_accuracy_ensamble.result()))

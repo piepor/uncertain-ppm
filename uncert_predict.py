@@ -10,6 +10,9 @@ from plotly.subplots import make_subplots
 import plotly.figure_factory as ff
 import argparse
 import re
+from utils import compute_features, loss_function, accuracy_function, compute_input_signature
+from helpdesk_utils import helpdesk_utils
+from bpic2012_utils import bpic2012_utils
 
 def combine_two_string(string1, string2):
     return "{}-{}".format(string1, string2)
@@ -74,7 +77,7 @@ def compute_features(file_path, vocabularies):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
-                    choices=['helpdesk'])
+                    choices=['helpdesk', 'bpic2012'])
 parser.add_argument('model_directory', help='directory where the ensamble models are saved')
 parser.add_argument('--plot_entire_sequences', help='plot the output distribution of N random sequences',
         default=0, type=int)
@@ -86,6 +89,8 @@ parser.add_argument('--model_type', help='choose the type of algorithm used to e
         default='ensamble', choices=['MC-dropout', 'ensamble'])
 parser.add_argument('--samples_number', help='number of sample for the MC dropout',
         default=5, type=int)
+parser.add_argument('--batch_size', help='size of batches',
+        default=64, type=int)
 parser.add_argument('--uncertainty_threshold', help='uncertainty threshold to select cases', 
         default=0.4, type=float)
 parser.add_argument('--plot_cases_threshold', help='plot cases below the threshold', 
@@ -109,6 +114,8 @@ parser.add_argument('--plot_accuracy_vs_uncertainty', help='box plot of accuracy
 parser.add_argument('--plot_proportions', 
                     help='box plot of right and wrong predictions normalize with the percentage of data in bin.', 
         default=False, type=bool)
+parser.add_argument('--tfds_id', help='extract also the case id from dataset', 
+        default=True, type=bool)
 
 # Parse and check arguments
 args = parser.parse_args()
@@ -128,8 +135,8 @@ num_wrong_preds = args.plot_wrong_predictions
 if num_wrong_preds > 0:
     plot_wrong_preds = True
 ds_type = args.dataset_type.lower()
-if not dataset in ['helpdesk']:
-    raise ValueError('Dataset not available') 
+#if not dataset in ['helpdesk']:
+#    raise ValueError('Dataset not available') 
 model_type = args.model_type
 if model_type == 'MC-dropout':
     dropout = True
@@ -145,6 +152,7 @@ if num_samples < 0:
 unc_threshold = args.uncertainty_threshold
 plot_threshold = args.plot_cases_threshold
 save_threshold = args.save_cases_threshold
+batch_size = args.batch_size
 acc_threshold = 0.5
 
 # plot stats
@@ -157,87 +165,131 @@ plot_reliability_diagram = args.plot_reliability_diagram
 plot_acc_unc = args.plot_accuracy_vs_uncertainty
 plot_acc_unc = args.plot_accuracy_vs_uncertainty
 plot_proportions = args.plot_proportions
+tfds_id = args.tfds_id
 
 # Start analysis - import dataset
 # change read config in order to return also the case id
 read_config = tfds.ReadConfig()
 read_config.add_tfds_id = True
+
+builder_ds = tfds.builder(dataset)
+ds_train = builder_ds.as_dataset(read_config=read_config, split='train[:70%]')
+ds_vali = builder_ds.as_dataset(read_config=read_config, split='train[70%:85%]')
+ds_test = builder_ds.as_dataset(read_config=read_config, split='train[85%:]')
 if dataset == 'helpdesk':
-    builder_helpdesk = tfds.builder('helpdesk')
-    ds_train = builder_helpdesk.as_dataset(read_config=read_config, split='train[:70%]')
-    ds_vali = builder_helpdesk.as_dataset(read_config=read_config, split='train[70%:85%]')
-    ds_test = builder_helpdesk.as_dataset(read_config=read_config, split='train[85%:]')
-
-    vocabulary = ['<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
-                  'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
-                  'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
-                  'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
-
+    padded_shapes, padding_values, vocabulary = helpdesk_utils(tfds_id)
+    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
     output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
                                                      num_oov_indices=1)
+elif dataset == 'bpic2012':
+    padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
+    features = compute_features(os.path.join(model_dir, 'features.params'), 
+                                {'activity': vocabulary_act, 'resource': vocabulary_res})
+    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
+                                                     num_oov_indices=1)
+#batch_size = 64
+#breakpoint()
+padded_ds_train = ds_train.padded_batch(batch_size, 
+        padded_shapes=padded_shapes,
+        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+train_examples = len(ds_train)
+padded_ds_vali = ds_vali.padded_batch(batch_size, 
+        padded_shapes=padded_shapes,
+        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+vali_examples = len(ds_vali)
+padded_ds_test = ds_test.padded_batch(batch_size, 
+        padded_shapes=padded_shapes,
+        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+test_examples = len(ds_test)
 
-    padded_shapes = {
-        'activity': [None],
-        'resource': [None],
-        'product': [None],    
-        'customer': [None],    
-        'responsible_section': [None],    
-        'service_level': [None],    
-        'service_type': [None],    
-        'seriousness': [None],    
-        'workgroup': [None],
-        'variant': [None],    
-        'relative_time': [None],
-        'day_part': [None],
-        'week_day': [None],
-        'tfds_id': (),
-    }
-    padding_values = {
-        'activity': '<PAD>',
-        'resource': tf.cast(0, dtype=tf.int64),
-        'product': tf.cast(0, dtype=tf.int64),    
-        'customer': tf.cast(0, dtype=tf.int64),    
-        'responsible_section': tf.cast(0, dtype=tf.int64),    
-        'service_level': tf.cast(0, dtype=tf.int64),    
-        'service_type': tf.cast(0, dtype=tf.int64),    
-        'seriousness': tf.cast(0, dtype=tf.int64),    
-        'workgroup': tf.cast(0, dtype=tf.int64),
-        'variant': tf.cast(0, dtype=tf.int64),    
-        'relative_time': tf.cast(0, dtype=tf.int32),
-        'day_part': tf.cast(0, dtype=tf.int64),
-        'week_day': tf.cast(0, dtype=tf.int64),
-        'tfds_id': '<PAD>',
-    }
-
-
-    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
-    batch_size = 64
-    #breakpoint()
-    padded_ds_train = ds_train.padded_batch(batch_size, 
-            padded_shapes=padded_shapes,
-            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-    train_examples = len(ds_train)
-    padded_ds_vali = ds_vali.padded_batch(batch_size, 
-            padded_shapes=padded_shapes,
-            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-    vali_examples = len(ds_vali)
-    padded_ds_test = ds_test.padded_batch(batch_size, 
-            padded_shapes=padded_shapes,
-            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-    test_examples = len(ds_test)
-
-    if ds_type == 'all':
-        datasets = [(padded_ds_train, train_examples, 'training set'),
-                (padded_ds_vali, vali_examples, 'validation set'),
-                (padded_ds_test, test_examples, 'test set')]
-    elif ds_type == 'training':
-        datasets = [(padded_ds_train, train_examples, 'training set')]
-    elif ds_type == 'validation':
-        datasets = [(padded_ds_vali, vali_examples, 'validation set')]
-    elif ds_type == 'test':
-        datasets = [(padded_ds_test, test_examples, 'test set')]
-    else:
-        raise ValueError('Dataset type not understood')
+if ds_type == 'all':
+    datasets = [(padded_ds_train, train_examples, 'training set'),
+            (padded_ds_vali, vali_examples, 'validation set'),
+            (padded_ds_test, test_examples, 'test set')]
+elif ds_type == 'training':
+    datasets = [(padded_ds_train, train_examples, 'training set')]
+elif ds_type == 'validation':
+    datasets = [(padded_ds_vali, vali_examples, 'validation set')]
+elif ds_type == 'test':
+    datasets = [(padded_ds_test, test_examples, 'test set')]
+else:
+    raise ValueError('Dataset type not understood')
+#if dataset == 'helpdesk':
+#    builder_helpdesk = tfds.builder('helpdesk')
+#    ds_train = builder_helpdesk.as_dataset(read_config=read_config, split='train[:70%]')
+#    ds_vali = builder_helpdesk.as_dataset(read_config=read_config, split='train[70%:85%]')
+#    ds_test = builder_helpdesk.as_dataset(read_config=read_config, split='train[85%:]')
+#
+#    vocabulary = ['<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
+#                  'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
+#                  'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
+#                  'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
+#
+#    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
+#                                                     num_oov_indices=1)
+#
+#    padded_shapes = {
+#        'activity': [None],
+#        'resource': [None],
+#        'product': [None],    
+#        'customer': [None],    
+#        'responsible_section': [None],    
+#        'service_level': [None],    
+#        'service_type': [None],    
+#        'seriousness': [None],    
+#        'workgroup': [None],
+#        'variant': [None],    
+#        'relative_time': [None],
+#        'day_part': [None],
+#        'week_day': [None],
+#        'tfds_id': (),
+#    }
+#    padding_values = {
+#        'activity': '<PAD>',
+#        'resource': tf.cast(0, dtype=tf.int64),
+#        'product': tf.cast(0, dtype=tf.int64),    
+#        'customer': tf.cast(0, dtype=tf.int64),    
+#        'responsible_section': tf.cast(0, dtype=tf.int64),    
+#        'service_level': tf.cast(0, dtype=tf.int64),    
+#        'service_type': tf.cast(0, dtype=tf.int64),    
+#        'seriousness': tf.cast(0, dtype=tf.int64),    
+#        'workgroup': tf.cast(0, dtype=tf.int64),
+#        'variant': tf.cast(0, dtype=tf.int64),    
+#        'relative_time': tf.cast(0, dtype=tf.int32),
+#        'day_part': tf.cast(0, dtype=tf.int64),
+#        'week_day': tf.cast(0, dtype=tf.int64),
+#        'tfds_id': '<PAD>',
+#    }
+#
+#
+#    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
+#    batch_size = 64
+#    #breakpoint()
+#    padded_ds_train = ds_train.padded_batch(batch_size, 
+#            padded_shapes=padded_shapes,
+#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+#    train_examples = len(ds_train)
+#    padded_ds_vali = ds_vali.padded_batch(batch_size, 
+#            padded_shapes=padded_shapes,
+#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+#    vali_examples = len(ds_vali)
+#    padded_ds_test = ds_test.padded_batch(batch_size, 
+#            padded_shapes=padded_shapes,
+#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+#    test_examples = len(ds_test)
+#
+#    if ds_type == 'all':
+#        datasets = [(padded_ds_train, train_examples, 'training set'),
+#                (padded_ds_vali, vali_examples, 'validation set'),
+#                (padded_ds_test, test_examples, 'test set')]
+#    elif ds_type == 'training':
+#        datasets = [(padded_ds_train, train_examples, 'training set')]
+#    elif ds_type == 'validation':
+#        datasets = [(padded_ds_vali, vali_examples, 'validation set')]
+#    elif ds_type == 'test':
+#        datasets = [(padded_ds_test, test_examples, 'test set')]
+#    else:
+#        raise ValueError('Dataset type not understood')
 
 models_names = [name for name in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, name))]
 if len(models_names) == 0:
@@ -280,7 +332,7 @@ for ds, num_examples, ds_name in datasets:
         target_data = batch_data['activity'][:, 1:]
         #breakpoint()
         exs = [ex.numpy().decode('utf-8') for ex in batch_data['tfds_id']]
-        target_data_case = [idx_to_int(tfds_id, builder_helpdesk) for tfds_id in exs] 
+        target_data_case = [idx_to_int(tfds_id, builder_ds) for tfds_id in exs] 
         target_data_case = target_data_case * np.ones_like(target_data).T
         target_data_case = target_data_case.T
         target_label = np.hstack([target_label, target_data.numpy().ravel()]) 
@@ -344,10 +396,9 @@ for ds, num_examples, ds_name in datasets:
         u_e = u_t - u_a
         u_e_array_single = np.hstack([u_e_array_single, u_e.ravel()])
 
-        vocabulary_plot = ['<PAD>', '<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
-                      'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
-                      'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
-                      'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
+        vocabulary_plot = ['<PAD>']
+        vocabulary_plot.extend(vocabulary_act)
+
         length_seq = tf.reduce_sum(
                 tf.cast(tf.math.logical_not(
                     tf.math.equal(target_data, 0)), dtype=tf.float32),
