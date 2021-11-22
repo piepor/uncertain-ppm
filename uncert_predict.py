@@ -152,6 +152,11 @@ if num_samples < 0:
 unc_threshold = args.uncertainty_threshold
 plot_threshold = args.plot_cases_threshold
 save_threshold = args.save_cases_threshold
+if save_threshold:
+    try:
+        os.remove('saved_cases.txt')
+    except:
+        pass
 batch_size = args.batch_size
 acc_threshold = 0.5
 
@@ -214,82 +219,6 @@ elif ds_type == 'test':
     datasets = [(padded_ds_test, test_examples, 'test set')]
 else:
     raise ValueError('Dataset type not understood')
-#if dataset == 'helpdesk':
-#    builder_helpdesk = tfds.builder('helpdesk')
-#    ds_train = builder_helpdesk.as_dataset(read_config=read_config, split='train[:70%]')
-#    ds_vali = builder_helpdesk.as_dataset(read_config=read_config, split='train[70%:85%]')
-#    ds_test = builder_helpdesk.as_dataset(read_config=read_config, split='train[85%:]')
-#
-#    vocabulary = ['<START>',  '<END>','Resolve SW anomaly', 'Resolve ticket', 'RESOLVED', 
-#                  'DUPLICATE', 'Take in charge ticket', 'Create SW anomaly',
-#                  'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
-#                  'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
-#
-#    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
-#                                                     num_oov_indices=1)
-#
-#    padded_shapes = {
-#        'activity': [None],
-#        'resource': [None],
-#        'product': [None],    
-#        'customer': [None],    
-#        'responsible_section': [None],    
-#        'service_level': [None],    
-#        'service_type': [None],    
-#        'seriousness': [None],    
-#        'workgroup': [None],
-#        'variant': [None],    
-#        'relative_time': [None],
-#        'day_part': [None],
-#        'week_day': [None],
-#        'tfds_id': (),
-#    }
-#    padding_values = {
-#        'activity': '<PAD>',
-#        'resource': tf.cast(0, dtype=tf.int64),
-#        'product': tf.cast(0, dtype=tf.int64),    
-#        'customer': tf.cast(0, dtype=tf.int64),    
-#        'responsible_section': tf.cast(0, dtype=tf.int64),    
-#        'service_level': tf.cast(0, dtype=tf.int64),    
-#        'service_type': tf.cast(0, dtype=tf.int64),    
-#        'seriousness': tf.cast(0, dtype=tf.int64),    
-#        'workgroup': tf.cast(0, dtype=tf.int64),
-#        'variant': tf.cast(0, dtype=tf.int64),    
-#        'relative_time': tf.cast(0, dtype=tf.int32),
-#        'day_part': tf.cast(0, dtype=tf.int64),
-#        'week_day': tf.cast(0, dtype=tf.int64),
-#        'tfds_id': '<PAD>',
-#    }
-#
-#
-#    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
-#    batch_size = 64
-#    #breakpoint()
-#    padded_ds_train = ds_train.padded_batch(batch_size, 
-#            padded_shapes=padded_shapes,
-#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-#    train_examples = len(ds_train)
-#    padded_ds_vali = ds_vali.padded_batch(batch_size, 
-#            padded_shapes=padded_shapes,
-#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-#    vali_examples = len(ds_vali)
-#    padded_ds_test = ds_test.padded_batch(batch_size, 
-#            padded_shapes=padded_shapes,
-#            padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-#    test_examples = len(ds_test)
-#
-#    if ds_type == 'all':
-#        datasets = [(padded_ds_train, train_examples, 'training set'),
-#                (padded_ds_vali, vali_examples, 'validation set'),
-#                (padded_ds_test, test_examples, 'test set')]
-#    elif ds_type == 'training':
-#        datasets = [(padded_ds_train, train_examples, 'training set')]
-#    elif ds_type == 'validation':
-#        datasets = [(padded_ds_vali, vali_examples, 'validation set')]
-#    elif ds_type == 'test':
-#        datasets = [(padded_ds_test, test_examples, 'test set')]
-#    else:
-#        raise ValueError('Dataset type not understood')
 
 models_names = [name for name in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, name))]
 if len(models_names) == 0:
@@ -411,16 +340,32 @@ for ds, num_examples, ds_name in datasets:
         u_a_array_mean = np.hstack([u_a_array_mean, mean_u_a])
         u_e_array_mean = np.hstack([u_e_array_mean, mean_u_e])
 
-        check_cond_tot_unc_prob = np.logical_and(u_t<unc_threshold, mask).any() and np.logical_and(acc_single<acc_threshold, mask).any()
-        check_cond_wrong = np.logical_and(acc_single==0.0, mask).any() and plot_wrong_preds and count_wrong<num_wrong_preds
+        check_cond_tot_unc_prob = np.logical_and(u_t<unc_threshold, mask).any() \
+            and np.logical_and(acc_single<acc_threshold, mask).any()
+        check_cond_wrong = np.logical_and(acc_single==0.0, mask).any() \
+            and plot_wrong_preds and count_wrong<num_wrong_preds
         check_cond_entire = plot_entire_seqs and count_seq<num_seq_entire
+        # mask the row if an event of the case respect the condition 
+        prob_unc_mask = np.logical_and(tf.math.less(acc_single, acc_threshold).numpy(), u_t<unc_threshold)
+        prob_unc_mask = np.logical_and(prob_unc_mask, mask)
+        prob_unc_mask = np.ma.masked_equal(prob_unc_mask, True)
+        prob_unc_mask = np.ma.mask_rows(prob_unc_mask).mask
+        if check_cond_tot_unc_prob and save_threshold:
+            case_names = target_case[1:]
+            #breakpoint()
+            case_selected = target_data_case[prob_unc_mask]
+            case_selected = case_selected.reshape((-1, prob_unc_mask.shape[1]))
+            for num_row in range(case_selected.shape[0]):
+                with open('saved_cases.txt', 'a') as file:
+                    file.write("{}\n".format(case_selected[num_row, 0]))
+            #breakpoint()
 
         if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (save_threshold or plot_threshold)):
             # mask the row if an event of the case respect the condition 
-            prob_unc_mask = np.logical_and(tf.math.less(acc_single, acc_threshold).numpy(), u_t<unc_threshold)
-            prob_unc_mask = np.logical_and(prob_unc_mask, mask)
-            prob_unc_mask = np.ma.masked_equal(prob_unc_mask, True)
-            prob_unc_mask = np.ma.mask_rows(prob_unc_mask).mask
+#            prob_unc_mask = np.logical_and(tf.math.less(acc_single, acc_threshold).numpy(), u_t<unc_threshold)
+#            prob_unc_mask = np.logical_and(prob_unc_mask, mask)
+#            prob_unc_mask = np.ma.masked_equal(prob_unc_mask, True)
+#            prob_unc_mask = np.ma.mask_rows(prob_unc_mask).mask
             if not np.ma.masked_equal(prob_unc_mask, True).mask.any():
                 prob_unc_mask = np.zeros_like(acc_single)
             for num_row in range(acc_single.shape[0]):
