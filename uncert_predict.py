@@ -182,9 +182,9 @@ ds_train = builder_ds.as_dataset(read_config=read_config, split='train[:70%]')
 ds_vali = builder_ds.as_dataset(read_config=read_config, split='train[70%:85%]')
 ds_test = builder_ds.as_dataset(read_config=read_config, split='train[85%:]')
 if dataset == 'helpdesk':
-    padded_shapes, padding_values, vocabulary = helpdesk_utils(tfds_id)
-    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary})
-    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
+    padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id)
+    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary_act})
+    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
                                                      num_oov_indices=1)
 elif dataset == 'bpic2012':
     padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
