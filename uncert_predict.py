@@ -13,67 +13,14 @@ import re
 from utils import compute_features, loss_function, accuracy_function, compute_input_signature
 from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
-
-def combine_two_string(string1, string2):
-    return "{}-{}".format(string1, string2)
-
-def reliability_diagram(target, predicted_probs, rel_dict, bins=0.05):
-    #breakpoint()
-    #out_dict = dict()
-    count_bin = 0
-    for num_bin in np.arange(0, 1, bins):
-        masked = np.ma.masked_outside(np.max(predicted_probs, axis=2), num_bin, num_bin+bins) 
-        acc = np.equal(target, np.argmax(predicted_probs, axis=2))
-        acc = np.ma.masked_array(acc, masked.mask, fill_value=-1)
-        acc = acc.mean().data.tolist()
-        #out_set.add(((num_bin, num_bin+bins), acc))
-        count_bin += 1
-        if 'bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins) in rel_dict.keys():
-            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)].append(acc)
-        else:
-            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)] = [acc]
-        #    out_dict['bin{}'.format(count_bin)].append(rel_dict['bin{}'.format(count_bin)]
-        #    out_dict['bin{}'.format(count_bin)] /= 2
-    return rel_dict
-
-def idx_to_int(tfds_id: str, builder):
-    """Format the tfds_id in a more human-readable."""
-    match = re.match(r'\w+-(\w+).\w+-(\d+)-of-\d+__(\d+)', tfds_id)
-    split_name, shard_id, ex_id = match.groups()
-    return int(ex_id)
-
-def accuracy_function(real, pred):
-    accuracies = tf.equal(real, tf.argmax(pred, axis=2))
-
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    accuracies = tf.math.logical_and(mask, accuracies)
-    
-    accuracies = tf.cast(accuracies, dtype=tf.float32)
-    mask = tf.cast(mask, dtype=tf.float32)
-    return tf.reduce_sum(accuracies, axis=-1)/tf.reduce_sum(mask, axis=-1)
-
-def single_accuracies(real, pred):
-    accuracies = tf.equal(real, tf.argmax(pred, axis=2))
-
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    accuracies = tf.math.logical_and(mask, accuracies)
-    accuracies = tf.cast(accuracies, dtype=tf.float32)
-    accuracies = tf.where(mask, accuracies, tf.ones(tf.shape(accuracies))*-1)
-    return accuracies
-
-def get_targets_probability(real, pred):
-    one_hot = tf.one_hot(real, pred.shape[2])
-    mult = pred * one_hot
-    target_prob = tf.reshape(mult[mult>0], (real.shape[0], real.shape[1]))
-    return target_prob
-    
-def compute_features(file_path, vocabularies):
-    with open(file_path, 'r') as file:
-        features = list(yaml.load_all(file, Loader=yaml.FullLoader))
-    for feature in features:
-        if feature['feature-type'] == 'string':
-            feature['vocabulary'] = vocabularies[feature['name']]
-    return features
+from utils import combine_two_string, reliability_diagram, idx_to_int, accuracy_function
+from utils import single_accuracies, get_targets_probability, compute_features
+from utils import import_dataset, load_models, process_args, compute_distributions
+from utils import binary_crossentropy, max_multiclass_crossentropy
+from plot_utils import compute_bin_data, accuracy_uncertainty_plot, proportions_plot
+from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
+from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
+from plot_utils import event_correctness_plot, event_probability_plot
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
@@ -104,7 +51,7 @@ parser.add_argument('--plot_event_probability_vs_uncertainty', help='plot single
 parser.add_argument('--plot_event_correctness_vs_uncertainty', help='plot single event correctness vs uncertainty', 
         default=False, type=bool)
 parser.add_argument('--plot_box_plot_uncertainty', help='plot box plot of uncertainties', 
-        default=True, type=bool)
+        default=False, type=bool)
 parser.add_argument('--plot_distributions', help='plot distribution of uncertainties', 
         default=False, type=bool)
 parser.add_argument('--plot_reliability_diagram', help='plot reliability diagram', 
@@ -119,47 +66,22 @@ parser.add_argument('--tfds_id', help='extract also the case id from dataset',
 
 # Parse and check arguments
 args = parser.parse_args()
-
-dataset = args.dataset.lower()
-model_dir = os.path.join('models_ensamble', dataset.lower(), args.model_directory)
+plot_entire_seqs, plot_wrong_preds, dropout = process_args(parser)
+dataset = args.dataset
+model_dir = os.path.join('models_ensamble', dataset, args.model_directory)
 model_number = args.model_directory.split('_')[1]
-if not os.path.isdir(model_dir):
-    raise OSError('Directory {} does not exist'.format(model_dir)) 
 
-plot_entire_seqs = False
 num_seq_entire = args.plot_entire_sequences
-if num_seq_entire > 0:
-    plot_entire_seqs = True
-plot_wrong_preds = False
 num_wrong_preds = args.plot_wrong_predictions
-if num_wrong_preds > 0:
-    plot_wrong_preds = True
-ds_type = args.dataset_type.lower()
-#if not dataset in ['helpdesk']:
-#    raise ValueError('Dataset not available') 
+ds_type = args.dataset_type
 model_type = args.model_type
-if model_type == 'MC-dropout':
-    dropout = True
-elif model_type == 'ensamble':
-    dropout = False
-else:
-    raise ValueError('Model type not implemented')
 num_samples = args.samples_number
-if num_samples < 0:
-    raise ValueError('Number of samples must be positive')
-
 # thresholds
 unc_threshold = args.uncertainty_threshold
 plot_threshold = args.plot_cases_threshold
 save_threshold = args.save_cases_threshold
-if save_threshold:
-    try:
-        os.remove('saved_cases.txt')
-    except:
-        pass
 batch_size = args.batch_size
 acc_threshold = 0.5
-
 # plot stats
 plot_mean_acc = args.plot_mean_accuracy_vs_uncertainty
 plot_event_prob = args.plot_event_probability_vs_uncertainty
@@ -174,66 +96,14 @@ tfds_id = args.tfds_id
 
 # Start analysis - import dataset
 # change read config in order to return also the case id
-read_config = tfds.ReadConfig()
-read_config.add_tfds_id = True
-
-builder_ds = tfds.builder(dataset)
-ds_train = builder_ds.as_dataset(read_config=read_config, split='train[:70%]')
-ds_vali = builder_ds.as_dataset(read_config=read_config, split='train[70%:85%]')
-ds_test = builder_ds.as_dataset(read_config=read_config, split='train[85%:]')
-if dataset == 'helpdesk':
-    padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id)
-    features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary_act})
-    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
-                                                     num_oov_indices=1)
-elif dataset == 'bpic2012':
-    padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
-    features = compute_features(os.path.join(model_dir, 'features.params'), 
-                                {'activity': vocabulary_act, 'resource': vocabulary_res})
-    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
-                                                     num_oov_indices=1)
-#batch_size = 64
-#breakpoint()
-padded_ds_train = ds_train.padded_batch(batch_size, 
-        padded_shapes=padded_shapes,
-        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-train_examples = len(ds_train)
-padded_ds_vali = ds_vali.padded_batch(batch_size, 
-        padded_shapes=padded_shapes,
-        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-vali_examples = len(ds_vali)
-padded_ds_test = ds_test.padded_batch(batch_size, 
-        padded_shapes=padded_shapes,
-        padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
-test_examples = len(ds_test)
-
-if ds_type == 'all':
-    datasets = [(padded_ds_train, train_examples, 'training set'),
-            (padded_ds_vali, vali_examples, 'validation set'),
-            (padded_ds_test, test_examples, 'test set')]
-elif ds_type == 'training':
-    datasets = [(padded_ds_train, train_examples, 'training set')]
-elif ds_type == 'validation':
-    datasets = [(padded_ds_vali, vali_examples, 'validation set')]
-elif ds_type == 'test':
-    datasets = [(padded_ds_test, test_examples, 'test set')]
-else:
-    raise ValueError('Dataset type not understood')
-
-models_names = [name for name in os.listdir(model_dir) if os.path.isdir(os.path.join(model_dir, name))]
-if len(models_names) == 0:
-    raise OSError('No models are contained in {}'.format(model_dir))
-
-models = []
-for num, model_name in enumerate(models_names):
-    if (model_type == 'ensamble') or (model_type == 'MC-dropout' and num == 0):
-        model_path = os.path.join(model_dir, model_name)
-        model = tf.keras.models.load_model(model_path)
-        models.append(model)
+datasets, builder_ds = import_dataset(dataset, ds_type, tfds_id, batch_size)
+features, output_preprocess, models, vocabulary_act = load_models(model_dir, dataset, tfds_id, model_type)
 
 count_seq = 0
 count_wrong = 0
 for ds, num_examples, ds_name in datasets:
+    title_text='Model {} - {} - {}'.format(
+        model_number, model_type.capitalize(), ds_name.capitalize())
     if plot_entire_seqs or plot_wrong_preds:
         count_seq = 0
         count_wrong = 0
@@ -270,31 +140,8 @@ for ds, num_examples, ds_name in datasets:
         target_data = output_preprocess(target_data)
         mask = tf.math.logical_not(tf.math.equal(target_data, 0))
 
-        u_a = 0
-        if model_type == 'MC-dropout':
-            for i in range(num_samples):
-                out_prob = tf.nn.softmax(model(input_data, training=dropout))
-                if  i == 0:
-                    out_prob_tot_distr = out_prob
-                else:
-                    out_prob_tot_distr += out_prob
-                # compute aleatoric uncertainty
-                u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
-
-            out_prob_tot_distr /= num_samples
-        
-        else:
-
-            for i, model in enumerate(models):
-                out_prob = tf.nn.softmax(model(input_data, training=dropout))
-                if  i == 0:
-                    out_prob_tot_distr = out_prob
-                else:
-                    out_prob_tot_distr += out_prob
-                # compute aleatoric uncertainty
-                u_a += np.sum(out_prob.numpy()*np.log(out_prob.numpy()), axis=-1)
-
-            out_prob_tot_distr /= len(models)
+        u_a, out_prob_tot_distr, out_prob = compute_distributions(
+            models, model_type, input_data, dropout, num_samples)
 
         rel_bins = 0.05
         rel_dict = reliability_diagram(target_data.numpy(), out_prob_tot_distr.numpy(), rel_dict, rel_bins)
@@ -361,75 +208,13 @@ for ds, num_examples, ds_name in datasets:
             #breakpoint()
 
         if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (save_threshold or plot_threshold)):
-            # mask the row if an event of the case respect the condition 
-#            prob_unc_mask = np.logical_and(tf.math.less(acc_single, acc_threshold).numpy(), u_t<unc_threshold)
-#            prob_unc_mask = np.logical_and(prob_unc_mask, mask)
-#            prob_unc_mask = np.ma.masked_equal(prob_unc_mask, True)
-#            prob_unc_mask = np.ma.mask_rows(prob_unc_mask).mask
-            if not np.ma.masked_equal(prob_unc_mask, True).mask.any():
-                prob_unc_mask = np.zeros_like(acc_single)
-            for num_row in range(acc_single.shape[0]):
-                check_cond_wrong_row = np.logical_and(acc_single[num_row, :]==0.0, mask[num_row, :]).any() and check_cond_wrong
-                if plot_wrong_preds:
-                    check_cond_random_idx = (batch_idx * batch_size + num_row in random_idx_plot) 
-                else:
-                    check_cond_random_idx = False
-                if check_cond_wrong_row or check_cond_random_idx or (prob_unc_mask[num_row, 0] and plot_threshold):
-                    act = ''
-                    for j in range(target_data.shape[1]):
-                        act += '{} - '.format(input_data[0][num_row, j].numpy().decode("utf-8"))
-                        check_cond_wrong_single_pred = check_cond_wrong_row and acc_single[num_row, j] == 0.0 and count_wrong<num_wrong_preds
-                        if (check_cond_wrong_single_pred or check_cond_random_idx or (plot_threshold and prob_unc_mask[num_row, 0])) and not target_data[num_row, j].numpy() == 0:
-                            target_numpy = np.zeros(len(vocabulary_plot))
-                            target_numpy[target_data[num_row, j].numpy()] = 1
-                            #fig = go.Figure()
-                            fig = make_subplots(rows=1, cols=2, column_widths=[0.8, 0.2])
-                            fig.add_trace(go.Bar(x=vocabulary_plot, y=target_numpy,
-                                                 marker=dict(opacity=0.4), name='actual event'),
-                                          row=1, col=1)
-                            fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob[num_row, j].numpy(),
-                                                 marker=dict(opacity=0.4), name='single model'),
-                                          row=1, col=1)
-                            fig.add_trace(go.Bar(x=vocabulary_plot, y=out_prob_tot_distr[num_row, j].numpy(),
-                                                 marker=dict(opacity=0.4), name='{} models'.format(model_type)),
-                                          row=1, col=1)
-                            fig.add_trace(go.Bar(x=['Uncertainty'], y=[u_t[num_row, j]], name='Epistemic', offsetgroup=0),
-                                          row=1, col=2)
-                            fig.add_trace(go.Bar(x=['Uncertainty'], y=[u_a[num_row, j]], name='Aleatoric', offsetgroup=0),
-                                          row=1, col=2)
-                            fig.layout['yaxis2'].update(range=[0, 1.2*np.max(u_t)])
-                            fig.update_layout(barmode='overlay', title_text="Model {}-{}-{}<br><sup>{}</sup>".format(
-                                model_number, model_type, ds_name.capitalize(), act))
-                            #fig.update_traces(opacity=0.6)
-                            fig.show(renderer='chromium')
-                            #breakpoint()
-                            count_wrong += 1
-                    count_seq += 1
-#                    print("Mean total uncertainty: {}".format(mean_u_t[i]))
-#                    print("Mean aleatoric uncertainty: {}".format(mean_u_a[i]))
-#                    print("Mean epistemic uncertainty: {}".format(mean_u_e[i]))
-                    #breakpoint()
+            sequences_plot(prob_unc_mask, acc_single, check_cond_wrong, random_idx_plot, input_data, u_t,
+                           u_a, batch_size, plot_threshold, target_data, mask, plot_wrong_preds,
+                           vocabulary_plot, out_prob, out_prob_tot_distr, model_type, 
+                           batch_idx, title_text, count_wrong, count_seq, num_wrong_preds)
 
     if plot_reliability_diagram:
-        rel_bin_plot = []
-        rel_acc_plot = []
-        rel_acc_plot_one_model = []
-        for key in rel_dict.keys():
-            rel_bin_plot.append(rel_bins)
-            rel_acc_plot.append(np.mean(rel_dict[key]))
-            rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key]))
-        #breakpoint()
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot, 
-                             width=rel_bin_plot, offset=0, name='ensamble', opacity=0.7))
-        fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot_one_model, 
-                             width=rel_bin_plot, offset=0, name='one model', opacity=0.7))
-        fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color='black', dash='dash')))
-        fig.update_layout(title_text='Reliability Diagram - Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Confidence')
-        fig.update_yaxes(title_text='Accuracy')
-        fig.show(renderer='chromium')
+        reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text)
 
     u_t_array = u_t_array_mean[1:]
     u_a_array = u_a_array_mean[1:]
@@ -456,41 +241,6 @@ for ds, num_examples, ds_name in datasets:
     target_case_array = target_case[ordered_acc_array]
     #breakpoint()
 
-    if plot_distr:
-        group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
-        hist_data = [u_t_array_single, u_a_array_single, u_e_array_single]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.2)
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-    if plot_mean_acc:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_t_array, y=acc_array, mode='markers', name='Total uncertainty'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Total uncertainty')
-        fig.update_yaxes(title_text='Mean sequence accuracy')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_a_array, y=acc_array, mode='markers', name='Aleatoric uncertainty'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_yaxes(title_text='Mean sequence accuracy')
-        fig.update_xaxes(title_text='Aleatoric uncertainty')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_e_array, y=acc_array, mode='markers', name='Epistemic uncertainty'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_yaxes(title_text='Mean sequence accuracy')
-        fig.update_xaxes(title_text='Epistemic uncertainty')
-        fig.show(renderer='chromium')
-
-# select valid unceratinties and divide between right and wrong predictions
-    #breakpoint()
     u_t_array_single = u_t_array_single[acc_array_single>-1]
     u_a_array_single = u_a_array_single[acc_array_single>-1]
     u_e_array_single = u_e_array_single[acc_array_single>-1]
@@ -499,6 +249,15 @@ for ds, num_examples, ds_name in datasets:
     target_case_array = target_case_array[acc_array_single>-1]
     max_prob_event_array = max_prob_event_array[acc_array_single>-1]
     acc_array_single = acc_array_single[acc_array_single>-1]
+    if plot_distr:
+        distributions_plot(u_t_array_single, u_a_array_single, u_e_array_single, title_text)
+
+    if plot_mean_acc:
+        mean_accuracy_plot(u_t_array, acc_array, 'Total', title_text)
+        mean_accuracy_plot(u_a_array, acc_array, 'Aleatoric', title_text)
+        mean_accuracy_plot(u_e_array, acc_array, 'Epistemic', title_text)
+
+# select valid unceratinties and divide between right and wrong predictions
     u_t_array_single_right = u_t_array_single[acc_array_single == 1]
     u_t_array_single_wrong = u_t_array_single[acc_array_single == 0]
     u_a_array_single_right = u_a_array_single[acc_array_single == 1]
@@ -506,186 +265,45 @@ for ds, num_examples, ds_name in datasets:
     u_e_array_single_right = u_e_array_single[acc_array_single == 1]
     u_e_array_single_wrong = u_e_array_single[acc_array_single == 0]
     # Compute bins to highligth percentage of wrong and right prediction
-    bin_size_perc = 0.15
-    max_unc = np.max(u_t_array_single)
-    num_bins = int(np.ceil(max_unc / bin_size_perc))
-    perc_right_plot = []
-    perc_wrong_plot = []
-    u_t_plot = []
-    acc_plot = []
-    perc_data = []
-    for count_bin in np.arange(0, max_unc, bin_size_perc):
-        tot_pred = u_t_array_single[
-            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        acc_pred = acc_array_single[
-            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        acc_plot.append(np.mean(acc_pred))
-        perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
-        perc_wrong = 1 - perc_right
-        perc_data_tot = len(tot_pred) / len(u_t_array_single)
-        perc_data.append(perc_data_tot)
-        perc_right_plot.append(perc_right*perc_data_tot)
-        perc_wrong_plot.append(perc_wrong*perc_data_tot)
-        u_t_plot.append(bin_size_perc)
+    u_t_plot, perc_right_plot, perc_wrong_plot, perc_data, acc_plot = compute_bin_data(
+        u_t_array_single, acc_array_single)
 
     if plot_proportions:
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_right_plot, 
-                             width=u_t_plot, offset=0, name='right predictions'))
-        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_wrong_plot,
-                             width=u_t_plot, offset=0, name='wrong predictions'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
+        proportions_plot(u_t_plot, perc_rigth_plot, perc_wrong_plot, title_text)
 
     if plot_acc_unc:
-        fig = go.Figure()
-        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=acc_plot, 
-                             width=u_t_plot, offset=0, name='accuracy'))
-        fig.add_trace(go.Bar(x=np.cumsum(u_t_plot)-u_t_plot, y=perc_data, 
-                             width=u_t_plot, offset=0, name='data percentage'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='total uncertainty')
-        fig.update_yaxes(title_text='accuracy')
-        fig.show(renderer='chromium')
+        accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text)
 
+    prob_array = np.linspace(1e-6, 1-(1e-6), 500)
+    bin_entropy_array = binary_crossentropy(prob_array)
+    multi_entropy_arrays = []
+    for i in range(len(vocabulary_act), 1, -1):
+        multi_entropy_arrays.append(max_multiclass_crossentropy(prob_array,
+                                                                num_class=i))
+    prob = np.linspace(1/2, 1/3, 100)
+    prob2 = np.linspace(1-(1e-6), 0.5, 100)
+    #breakpoint()
+    entropy_other = prob*np.log(prob) + prob2*(1 - prob)*np.log(prob2*(1 - prob)) + \
+        (1 - prob2)*(1 - prob) * np.log((1 - prob2)*(1 - prob))
+    entropy_other = -entropy_other
     if plot_event_prob:
         total_label = list(map(combine_two_string, target_case_array, target_label_array))
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_t_array_single_right, y=target_prob_array[acc_array_single==1],
-            mode='markers', text=total_label, name='right prediction'))
-        fig.add_trace(go.Scatter(x=u_t_array_single_wrong, y=target_prob_array[acc_array_single==0],
-            mode='markers', text=total_label, name='wrong prediction'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Total uncertainty')
-        fig.update_yaxes(title_text='Assigned probability')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_a_array_single_right, y=target_prob_array[acc_array_single==1],
-            mode='markers', text=target_label_array.tolist(), name='right prediction'))
-        fig.add_trace(go.Scatter(x=u_a_array_single_wrong, y=target_prob_array[acc_array_single==0],
-            mode='markers', text=target_label_array.tolist(), name='wrong prediction'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Aleatoric uncertainty')
-        fig.update_yaxes(title_text='Assigned probability')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_e_array_single_right, y=target_prob_array[acc_array_single==1],
-            mode='markers', text=target_label_array.tolist(), name='right prediction'))
-        fig.add_trace(go.Scatter(x=u_e_array_single_wrong, y=target_prob_array[acc_array_single==0],
-            mode='markers', text=target_label_array.tolist(), name='wrong prediction'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Epistemic uncertainty')
-        fig.update_yaxes(title_text='Assigned probability')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_t_array_single_right, y=max_prob_event_array[acc_array_single==1],
-            mode='markers', text=total_label, name='right prediction'))
-        fig.add_trace(go.Scatter(x=u_t_array_single_wrong, y=max_prob_event_array[acc_array_single==0],
-            mode='markers', text=total_label, name='wrong prediction'))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Total uncertainty')
-        fig.update_yaxes(title_text='Max probability predicted')
-        fig.show(renderer='chromium')
-
+        event_probability_plot(total_label, u_t_array_single_right, u_t_array_single_wrong,
+                               target_prob_array, acc_array_single, multi_entropy_arrays, prob_array,
+                               vocabulary_act, bin_entropy_array, u_a_array_single_right,
+                               u_a_array_single_wrong, u_e_array_single_right, u_e_array_single_wrong,
+                               max_prob_event_array, title_text, entropy_other, target_label_array, prob)
     if plot_event_corr:
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_t_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
-            marker=dict(color=target_prob_array, colorbar=dict(title='Assigned probability'), colorscale='Viridis'),
-            mode='markers', text=target_label_array.tolist()))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Total uncertainty')
-        fig.update_yaxes(title_text='Point prediction correctness')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_a_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
-            marker=dict(color=target_prob_array, colorbar=dict(title='Assigned probability'), colorscale='Viridis'),
-            mode='markers', text=target_label_array.tolist()))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Aleatoric uncertainty')
-        fig.update_yaxes(title_text='Point prediction correctness')
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=u_e_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
-            marker=dict(color=target_prob_array, colorbar=dict(title='Assigned probability'), colorscale='Viridis'),
-            mode='markers', text=target_label_array.tolist()))
-        fig.update_layout(title_text='Model {} - {} - {}'.format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.update_xaxes(title_text='Epistemic uncertainty')
-        fig.update_yaxes(title_text='Point prediction correctness')
-        fig.show(renderer='chromium')
-
+        event_correctness_plot(u_t_array_single, u_t_array_single, u_e_array_single,
+                               acc_array_single, target_label_array, target_prob_array, title_text)
 # Plot distribution
     if plot_distr:
-        group_labels = ['Right predictions', 'Wrong predictions']
-        hist_data = [u_t_array_single_right, u_t_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
-        fig.update_layout(title_text="Model {} - {} - {} - Total uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        hist_data = [u_a_array_single_right, u_a_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
-        fig.update_layout(title_text="Model {} - {} - {} - Aleatoric uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        hist_data = [u_e_array_single_right, u_e_array_single_wrong]
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
-        fig.update_layout(title_text="Model {} - {} - {} - Epistemic uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
+        distributions_plot_right_wrong(u_t_array_single_right, u_t_array_single_wrong,
+                                       u_a_array_single_right, u_a_array_single_wrong,
+                                       u_e_array_single_right, u_e_array_single_wrong, title_text)
 # Boxplot
     if plot_box_plot:
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_t_array_single_right, name='Right predictions'))
-        fig.add_trace(go.Box(y=u_t_array_single_wrong, name='Wrong predictions'))
-        fig.update_layout(title_text="Model {} - {} - {} - Total uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_a_array_single_right, name='Right predictions'))
-        fig.add_trace(go.Box(y=u_a_array_single_wrong, name='Wrong predictions'))
-        fig.update_layout(title_text="Model {} - {} - {} - Aleatoric uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_e_array_single_right, name='Right predictions'))
-        fig.add_trace(go.Box(y=u_e_array_single_wrong, name='Wrong predictions'))
-        fig.update_layout(title_text="Model {} - {} - {} - Epistemic uncertainty".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_t_array_single, name='Total uncertainty'))
-        fig.update_layout(title_text="Model {} - {} - {}".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_a_array_single, name='Aleatoric uncertainty'))
-        fig.update_layout(title_text="Model {} - {} - {}".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
-
-        fig = go.Figure()
-        fig.add_trace(go.Box(y=u_e_array_single, name='Epistemic uncertainty'))
-        fig.update_layout(title_text="Model {} - {} - {}".format(
-            model_number, model_type.capitalize(), ds_name.capitalize()))
-        fig.show(renderer='chromium')
+        box_plot_func(u_t_array_single_right, u_t_array_single_wrong, u_t_array_single,
+                      u_a_array_single_right, u_t_array_single_wrong, u_a_array_single,
+                      u_e_array_single_right, u_e_array_single_wrong, u_e_array_single,
+                      title_text)
