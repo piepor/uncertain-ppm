@@ -6,6 +6,31 @@ import tensorflow_datasets as tfds
 from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
 import os
+from pm4py.objects.log.util import interval_lifecycle
+from pm4py.util import constants
+from pm4py.algo.transformation.log_to_features import algorithm as log_to_features
+import pandas as pd
+from sklearn.decomposition import PCA
+from sklearn.ensemble import IsolationForest
+
+def anomaly_detection_isoalation_forest(log):
+    log = interval_lifecycle.assign_lead_cycle_time(log, parameters={
+        constans.PARAMETER_CONSTANT_START_TIMESTAMP_KEY: "start_timestamp",
+        constants.PARAMETER_CONSTANT_TIMESTAMP_KEY: "time:timestamp"
+    })
+    data, features_names = log_to_features.apply(log, 
+                                                 parameters={"str_ev_attr": ["concept:name", "org:resource"],
+                                                             "str_tr_attr": [], "num_ev_attr": ["@@approx_bh_partial_cycle_time"],
+                                                             "num_tr_attr": [], "str_evsucc_attr": ["concept:name", "org:resource"]})
+    df = pd.DataFrame(data, columns=features_names)
+    pca = PCA(n_components=5)
+    df2 = pd.DataFrame(pca.fit_transform(df))
+    model = IsolationForest()
+    model.fit(df2)
+    df2["scores"] = model.decision_function(df2)
+    df2["@@index"] = df2.index
+    df2 = df2.sort_values("scores")
+    return df2.loc[df2["scores"]<0].index.to_numpy()
 
 def compute_features(file_path, vocabularies):
     with open(file_path, 'r') as file:
