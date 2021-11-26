@@ -168,7 +168,7 @@ def load_models(model_dir, dataset, tfds_id, model_type):
         output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
                                                          num_oov_indices=1)
     models_names = [name for name in os.listdir(model_dir) if os.path.isdir(
-        os.path.join(model_dir, name))]
+        os.path.join(model_dir, name)) and not name == 'calibrated']
     if len(models_names) == 0:
         raise OSError('No models are contained in {}'.format(model_dir))
 

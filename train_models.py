@@ -8,9 +8,10 @@ import datetime
 import glob
 from shutil import copyfile
 import argparse
+from utils import load_models
 
 from utils import compute_features, loss_function, accuracy_function, compute_input_signature
-from model_utils import GeneralModel
+from model_utils import GeneralModel, ModelWithTemperature
 from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
 
@@ -33,6 +34,10 @@ parser.add_argument('--batch_size', help='size of training batches',
                     default=32, type=int)
 parser.add_argument('--ensamble_number', help='number of models in the ensamble',
                     default=5, type=int)
+parser.add_argument('--temperature_scaling', help='calibration of existing model',
+                    default=False, type=bool)
+parser.add_argument('--model_dir', help='directory of the model to calibrate',
+                    default=None)
 
 args = parser.parse_args()
 dataset = args.dataset
@@ -44,20 +49,26 @@ epochs = args.epochs
 patience = args.patience
 batch_size = args.batch_size
 num_models_ensamble = args.ensamble_number
+uncal_model_dir = args.model_dir
+calibration = args.temperature_scaling
+
+uncal_model_dir = 'models_ensamble/{}/{}'.format(dataset, uncal_model_dir)
+if calibration and (isinstance(uncal_model_dir, type(None)) or not os.path.exists(uncal_model_dir)):
+    raise ValueError('An existing model to calibrate must be provided')
 
 if dataset == 'helpdesk':
     ds_train = tfds.load(dataset, split='train[:70%]', shuffle_files=True)
     ds_vali = tfds.load(dataset, split='train[70%:85%]')
     ds_test = tfds.load(dataset, split='train[85%:]')
-    padded_shapes, padding_values, vocabulary = helpdesk_utils()
-    features = compute_features(features_name, {'activity': vocabulary})
-    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary,
+    padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id=False)
+    features = compute_features(features_name, {'activity': vocabulary_act})
+    output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
                                                      num_oov_indices=1)
 elif dataset == 'bpic2012':
     ds_train = tfds.load(dataset, split='train[:70%]', shuffle_files=True)
     ds_vali = tfds.load(dataset, split='train[70%:85%]')
     ds_test = tfds.load(dataset, split='train[85%:]')
-    padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils()
+    padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id=False)
     features = compute_features(features_name, 
                                 {'activity': vocabulary_act, 'resource': vocabulary_res})
     output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
@@ -73,9 +84,21 @@ num = 0
 for ensamble in ensamble_list:
     if int(ensamble.split('_')[2]) > num:
         num = int(ensamble.split('_')[2])
-model_dir = 'models_ensamble/{}/ensamble_{}'.format(dataset, int(num)+1)
-os.makedirs(model_dir)
-copyfile(features_name, os.path.join(model_dir, 'features.params'))
+if not calibration:
+    model_dir = 'models_ensamble/{}/ensamble_{}'.format(dataset, int(num)+1)
+    os.makedirs(model_dir)
+    copyfile(features_name, os.path.join(model_dir, 'features.params'))
+else:
+    model_dir = '{}/calibrated'.format(uncal_model_dir)
+    try:
+        os.makedirs(model_dir)
+    except:
+        pass
+    features, output_preprocess, inner_models, vocabulary_act = load_models(
+        uncal_model_dir, dataset, False, 'ensamble')
+    ds_train = ds_vali
+    models_names = [name for name in os.listdir(uncal_model_dir) if os.path.isdir(
+        os.path.join(uncal_model_dir, name))]
 
 # train loop
 wait = 0
@@ -89,27 +112,36 @@ padded_ds_vali = ds_vali.padded_batch(batch_size,
                                       padded_shapes=padded_shapes,
                                       padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
 
-for _ in range(num_models_ensamble):
+for cont in range(num_models_ensamble):
+    #breakpoint()
     current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
-    vali_log_dir = 'logs/gradient_tape/' + current_time + '/validation'
+    if calibration:
+        train_log_dir = 'logs/gradient_tape/' + models_names[cont] + '/calibration/train'
+        vali_log_dir = 'logs/gradient_tape/' + models_names[cont] + '/calibration/validation'
+        model_path = os.path.join(model_dir, models_names[cont])
+        model = ModelWithTemperature(inner_models[cont])
+    else:
+        train_log_dir = 'logs/gradient_tape/' + current_time + '/train'
+        vali_log_dir = 'logs/gradient_tape/' + current_time + '/validation'
+        model_path = os.path.join(model_dir, current_time)
+        model = GeneralModel(num_layers, features, ds_train, embed_dim,
+                             num_heads, feed_forward_dim, features[0]['input-dim'])
     train_summary_writer = tf.summary.create_file_writer(train_log_dir)
     vali_summary_writer = tf.summary.create_file_writer(vali_log_dir)
-    model_path = os.path.join(model_dir, current_time)
 
     train_loss = tf.keras.metrics.Mean(name='train_loss')
     train_accuracy = tf.keras.metrics.Mean(name='train_accuracy')
     vali_loss = tf.keras.metrics.Mean(name='vali_loss')
     vali_accuracy = tf.keras.metrics.Mean(name='vali_accuracy')
 
-    model = GeneralModel(num_layers, features, ds_train, embed_dim, num_heads, feed_forward_dim, features[0]['input-dim'])
-
     @tf.function(input_signature=[train_step_signature])
     def train_step(*args):
+        #breakpoint()
         input_data = []
         for arg in args[0]:
             input_data.append(arg[:, :-1])
         target_data = output_preprocess(args[0][0][:, 1:])
+        #breakpoint()
         with tf.GradientTape() as tape:
             logits = model(input_data, training=True) 
             loss_value = loss_function(target_data, logits, loss_object)
@@ -140,6 +172,7 @@ for _ in range(num_models_ensamble):
             input_data = []
             for feature in features:
                 input_data.append(batch_data[feature['name']])
+            #breakpoint()
             train_step(input_data)
             
         with train_summary_writer.as_default():

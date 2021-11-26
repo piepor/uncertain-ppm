@@ -109,6 +109,7 @@ class GeneralModel(tf.keras.Model):
 
 class ModelWithTemperature(tf.keras.Model):
     def __init__(self, model):
+        super().__init__()
         self.inner_model = model
         # freeze weights
         self.inner_model.trainable = False
