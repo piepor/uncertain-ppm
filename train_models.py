@@ -56,6 +56,9 @@ uncal_model_dir = 'models_ensamble/{}/{}'.format(dataset, uncal_model_dir)
 if calibration and (isinstance(uncal_model_dir, type(None)) or not os.path.exists(uncal_model_dir)):
     raise ValueError('An existing model to calibrate must be provided')
 
+if calibration:
+    features_name = os.path.join(uncal_model_dir, 'features.params')
+
 if dataset == 'helpdesk':
     ds_train = tfds.load(dataset, split='train[:70%]', shuffle_files=True)
     ds_vali = tfds.load(dataset, split='train[70%:85%]')

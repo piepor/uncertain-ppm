@@ -26,6 +26,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
                     choices=['helpdesk', 'bpic2012'])
 parser.add_argument('model_directory', help='directory where the ensamble models are saved')
+parser.add_argument('--model_calibrated', help='load model that have been calibrated',
+        default=False, type=bool)
 parser.add_argument('--plot_entire_sequences', help='plot the output distribution of N random sequences',
         default=0, type=int)
 parser.add_argument('--plot_wrong_predictions', help='plot N output distribution of wrong predictions',
@@ -83,6 +85,9 @@ save_threshold = args.save_cases_threshold
 batch_size = args.batch_size
 acc_threshold = 0.5
 # plot stats
+model_calibrated = args.model_calibrated
+if model_calibrated:
+    model_dir = os.path.join(model_dir, 'calibrated')
 plot_mean_acc = args.plot_mean_accuracy_vs_uncertainty
 plot_event_prob = args.plot_event_probability_vs_uncertainty
 plot_event_corr = args.plot_event_correctness_vs_uncertainty
