@@ -106,3 +106,16 @@ class GeneralModel(tf.keras.Model):
         out = self.transformer(feature_embedding)
         out = self.ffn_output(out)
         return out
+
+class ModelWithTemperature(tf.keras.Model):
+    def __init__(self, model):
+        self.inner_model = model
+        # freeze weights
+        self.inner_model.trainable = False
+        assert self.inner_model.trainable == False
+        self.temperature_scale = tf.Variable(1.5)
+
+    def call(self, inputs):
+        logits = self.inner_model(inputs)
+        return tf.math.divide(logits, self.temperature_scale)
+
