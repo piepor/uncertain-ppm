@@ -97,6 +97,7 @@ else:
         os.makedirs(model_dir)
     except:
         pass
+    copyfile(features_name, os.path.join(model_dir, 'features.params'))
     features, output_preprocess, inner_models, vocabulary_act = load_models(
         uncal_model_dir, dataset, False, 'ensamble')
     ds_train = ds_vali
