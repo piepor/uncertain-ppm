@@ -13,7 +13,46 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 
-def anomaly_detection_isoalation_forest(log):
+def compute_bin_data(u_t_array_single, acc_array_single):
+    bin_size_perc = 0.15
+    max_unc = np.max(u_t_array_single)
+    num_bins = int(np.ceil(max_unc / bin_size_perc))
+    perc_right_plot = []
+    perc_wrong_plot = []
+    u_t_plot = []
+    acc_plot = []
+    perc_data = []
+    for count_bin in np.arange(0, max_unc, bin_size_perc):
+        tot_pred = u_t_array_single[
+            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
+        acc_pred = acc_array_single[
+            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
+        acc_plot.append(np.mean(acc_pred))
+        perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
+        perc_wrong = 1 - perc_right
+        perc_data_tot = len(tot_pred) / len(u_t_array_single)
+        perc_data.append(perc_data_tot)
+        perc_right_plot.append(perc_right*perc_data_tot)
+        perc_wrong_plot.append(perc_wrong*perc_data_tot)
+        u_t_plot.append(bin_size_perc)
+    return u_t_plot, perc_right_plot, perc_wrong_plot, perc_data, acc_plot
+
+def expected_calibration_error(rel_dict):
+    ece = 0
+    num_total_valid_data = 0
+    #breakpoint()
+    for key in rel_dict.keys(): 
+        num_total_valid_data += rel_dict[key][:, 2].sum() 
+    #breakpoint()
+    for key in rel_dict.keys(): 
+        #breakpoint()
+        acc = rel_dict[key][:, 0 ].mean()
+        conf = rel_dict[key][:, 1 ].mean()
+        perc_data = rel_dict[key][:, 2].sum() / num_total_valid_data
+        ece += perc_data * np.abs(acc - conf) 
+    return ece
+
+def anomaly_detection_isolation_forest(log):
     log = interval_lifecycle.assign_lead_cycle_time(log, parameters={
         constans.PARAMETER_CONSTANT_START_TIMESTAMP_KEY: "start_timestamp",
         constants.PARAMETER_CONSTANT_TIMESTAMP_KEY: "time:timestamp"
@@ -77,17 +116,31 @@ def reliability_diagram(target, predicted_probs, rel_dict, bins=0.05):
     #breakpoint()
     #out_dict = dict()
     count_bin = 0
+    #breakpoint()
     for num_bin in np.arange(0, 1, bins):
+        #breakpoint()
+        masked_pad = np.ma.masked_equal(target, 0) 
         masked = np.ma.masked_outside(np.max(predicted_probs, axis=2), num_bin, num_bin+bins) 
+        valid_bin_mask = masked.mask | masked_pad.mask
         acc = np.equal(target, np.argmax(predicted_probs, axis=2))
-        acc = np.ma.masked_array(acc, masked.mask, fill_value=-1)
+        conf = np.max(predicted_probs, axis=2)
+        acc = np.ma.array(acc.tolist(), mask=valid_bin_mask.tolist())
+        conf = np.ma.array(conf.tolist(), mask=valid_bin_mask.tolist())
+        num_data = len(acc.compressed())
+        num_valid_pad_data = len(masked_pad.compressed())
+        #acc = np.ma.masked_array(acc, total_mask, fill_value=-1)
         acc = acc.mean().data.tolist()
+        conf = conf.mean().data.tolist()
         #out_set.add(((num_bin, num_bin+bins), acc))
         count_bin += 1
-        if 'bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins) in rel_dict.keys():
-            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)].append(acc)
+        key_dict = 'bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins) 
+        #breakpoint()
+        if key_dict in rel_dict.keys():
+            rel_dict[key_dict] = np.vstack((rel_dict[key_dict], [acc, conf, num_data]))
+            #rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)].append((acc, conf, len(acc.compressed())
         else:
-            rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)] = [acc]
+            rel_dict[key_dict] = np.asarray([acc, conf, num_data])
+            #rel_dict['bin{}_{:.2f}_{:.2f}'.format(count_bin, num_bin, num_bin + bins)] = [acc]
         #    out_dict['bin{}'.format(count_bin)].append(rel_dict['bin{}'.format(count_bin)]
         #    out_dict['bin{}'.format(count_bin)] /= 2
     return rel_dict

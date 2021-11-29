@@ -3,21 +3,41 @@ import plotly.figure_factory as ff
 import numpy as np
 from plotly.subplots import make_subplots
 
-def reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text):
+def reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text, ece=None, ece_one_model=None):
     rel_bin_plot = []
     rel_acc_plot = []
     rel_acc_plot_one_model = []
+    perc_data = []
+    perc_data_one_model = []
+    num_total_valid_data = 0
+    num_total_valid_data_one_model = 0
+    for key in rel_dict.keys(): 
+        num_total_valid_data += rel_dict[key][:, 2].sum() 
+        num_total_valid_data_one_model += rel_dict_one_model[key][:, 2].sum() 
     for key in rel_dict.keys():
         rel_bin_plot.append(rel_bins)
-        rel_acc_plot.append(np.mean(rel_dict[key]))
-        rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key]))
+        rel_acc_plot.append(np.mean(rel_dict[key][:, 0]))
+        rel_acc_plot_one_model.append(np.mean(rel_dict_one_model[key][:, 0]))
+        perc_data.append(rel_dict[key][:, 2].sum() / num_total_valid_data)
+        perc_data_one_model.append(rel_dict_one_model[key][:, 2].sum() / num_total_valid_data_one_model)
     #breakpoint()
+    name_ens = 'ensemble'
+    name_one_mod = 'one model'
+    if ece is not None:
+        name_ens = '{} - ECE {}'.format(name_ens, np.round(ece, 4))
+    if ece_one_model is not None:
+        name_one_mod = '{} - ECE {}'.format(name_one_mod, np.round(ece_one_model, 4))
     fig = go.Figure()
     fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot, 
-                         width=rel_bin_plot, offset=0, name='ensamble', opacity=0.7))
+                         width=rel_bin_plot, offset=0, name=name_ens, opacity=0.7))
     fig.add_trace(go.Bar(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=rel_acc_plot_one_model, 
-                         width=rel_bin_plot, offset=0, name='one model', opacity=0.7))
+                         width=rel_bin_plot, offset=0, name=name_one_mod, opacity=0.7))
     fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], line=dict(color='black', dash='dash')))
+    fig.add_trace(go.Scatter(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=perc_data,
+        name='perc data ens', line=dict(color='black'), mode='lines+markers'))
+    fig.add_trace(go.Scatter(x=np.cumsum(rel_bin_plot)-rel_bin_plot, y=perc_data_one_model,
+        name='perc data one model', line=dict(color='black', dash='dot'), mode='lines+markers',
+        marker=dict(symbol='cross')))
     fig.update_layout(title_text='Reliability Diagram - {}'.format(title_text))
     fig.update_xaxes(title_text='Confidence')
     fig.update_yaxes(title_text='Accuracy')
@@ -53,30 +73,6 @@ def accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text):
     fig.update_yaxes(title_text='accuracy')
     fig.show(renderer='chromium')
     return fig
-
-def compute_bin_data(u_t_array_single, acc_array_single):
-    bin_size_perc = 0.15
-    max_unc = np.max(u_t_array_single)
-    num_bins = int(np.ceil(max_unc / bin_size_perc))
-    perc_right_plot = []
-    perc_wrong_plot = []
-    u_t_plot = []
-    acc_plot = []
-    perc_data = []
-    for count_bin in np.arange(0, max_unc, bin_size_perc):
-        tot_pred = u_t_array_single[
-            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        acc_pred = acc_array_single[
-            (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        acc_plot.append(np.mean(acc_pred))
-        perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
-        perc_wrong = 1 - perc_right
-        perc_data_tot = len(tot_pred) / len(u_t_array_single)
-        perc_data.append(perc_data_tot)
-        perc_right_plot.append(perc_right*perc_data_tot)
-        perc_wrong_plot.append(perc_wrong*perc_data_tot)
-        u_t_plot.append(bin_size_perc)
-    return u_t_plot, perc_right_plot, perc_wrong_plot, perc_data, acc_plot
 
 def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single_wrong,
                            target_prob_array, acc_array_single, multi_entropy_arrays, prob_array,

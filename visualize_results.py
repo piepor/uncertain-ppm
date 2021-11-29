@@ -15,12 +15,14 @@ from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
 from utils import combine_two_string, reliability_diagram, idx_to_int, accuracy_function
 from utils import single_accuracies, get_targets_probability, compute_features
-from utils import import_dataset, load_models, process_args, compute_distributions
-from utils import binary_crossentropy, max_multiclass_crossentropy
-from plot_utils import compute_bin_data, accuracy_uncertainty_plot, proportions_plot
+from utils import compute_bin_data, import_dataset, load_models, process_args, compute_distributions
+from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
+from plot_utils import accuracy_uncertainty_plot, proportions_plot
 from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
 from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
 from plot_utils import event_correctness_plot, event_probability_plot
+#from sklearn.stats import linregress
+from statsmodels.stats.weightstats import DescrStatsW
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
@@ -86,8 +88,11 @@ batch_size = args.batch_size
 acc_threshold = 0.5
 # plot stats
 model_calibrated = args.model_calibrated
+model_calibrated_title = 'Not Calibrated'
 if model_calibrated:
     model_dir = os.path.join(model_dir, 'calibrated')
+    model_calibrated_title = 'Calibrated'
+
 plot_mean_acc = args.plot_mean_accuracy_vs_uncertainty
 plot_event_prob = args.plot_event_probability_vs_uncertainty
 plot_event_corr = args.plot_event_correctness_vs_uncertainty
@@ -107,8 +112,8 @@ features, output_preprocess, models, vocabulary_act = load_models(model_dir, dat
 count_seq = 0
 count_wrong = 0
 for ds, num_examples, ds_name in datasets:
-    title_text='Model {} - {} - {}'.format(
-        model_number, model_type.capitalize(), ds_name.capitalize())
+    title_text='Model {} - {} - {} - {} - {}'.format(
+        model_number, model_type.capitalize(), ds_name.capitalize(), dataset.capitalize(), model_calibrated_title)
     if plot_entire_seqs or plot_wrong_preds:
         count_seq = 0
         count_wrong = 0
@@ -219,7 +224,9 @@ for ds, num_examples, ds_name in datasets:
                            batch_idx, title_text, count_wrong, count_seq, num_wrong_preds)
 
     if plot_reliability_diagram:
-        reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text)
+        ece_ensemble = expected_calibration_error(rel_dict)
+        ece_one_model = expected_calibration_error(rel_dict_one_model)
+        reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text, ece_ensemble, ece_one_model)
 
     u_t_array = u_t_array_mean[1:]
     u_a_array = u_a_array_mean[1:]
@@ -277,7 +284,10 @@ for ds, num_examples, ds_name in datasets:
         proportions_plot(u_t_plot, perc_rigth_plot, perc_wrong_plot, title_text)
 
     if plot_acc_unc:
-        accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text)
+        data = np.asarray([np.cumsum(u_t_plot)-u_t_plot, acc_plot]).T
+        results = DescrStatsW(data, perc_data)
+        corr_coeff = results.corrcoef
+        accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, '{} - Corr Coeff {}'.format(title_text, np.round(corr_coeff[0,1], 4)))
 
     prob_array = np.linspace(1e-6, 1-(1e-6), 500)
     bin_entropy_array = binary_crossentropy(prob_array)
