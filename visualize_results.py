@@ -15,7 +15,8 @@ from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
 from utils import combine_two_string, reliability_diagram, idx_to_int, accuracy_function
 from utils import single_accuracies, get_targets_probability, compute_features
-from utils import compute_bin_data, import_dataset, load_models, process_args, compute_distributions
+from utils import compute_bin_data, import_dataset, load_models
+from utils import process_args, compute_distributions, anomaly_detection_isolation_forest
 from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
 from plot_utils import accuracy_uncertainty_plot, proportions_plot
 from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
@@ -23,6 +24,10 @@ from plot_utils import sequences_plot, reliability_diagram_plot, distributions_p
 from plot_utils import event_correctness_plot, event_probability_plot
 #from sklearn.stats import linregress
 from statsmodels.stats.weightstats import DescrStatsW
+import pm4py
+from pm4py.objects.conversion.log import converter as log_converter
+from pm4py.objects.log.util import dataframe_utils
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
@@ -85,12 +90,15 @@ parser.add_argument('--plot_proportions',
 parser.add_argument('--tfds_id',
                     help='extract also the case id from dataset. Default to True', 
                     default=True, type=bool)
+parser.add_argument('--anomaly_detection',
+                    help='Run anomaly detection with Isolation Forest. Default to None', 
+                    default=False, type=bool)
 
 # Parse and check arguments
 args = parser.parse_args()
 plot_entire_seqs, plot_wrong_preds, dropout = process_args(parser)
 dataset = args.dataset
-model_dir = os.path.join('models_ensamble', dataset, args.model_directory)
+model_dir = os.path.join('models', dataset, args.model_directory)
 model_number = args.model_directory.split('_')[1]
 
 num_seq_entire = args.plot_entire_sequences
@@ -121,7 +129,32 @@ plot_acc_unc = args.plot_accuracy_vs_uncertainty
 plot_acc_unc = args.plot_accuracy_vs_uncertainty
 plot_proportions = args.plot_proportions
 tfds_id = args.tfds_id
+anomaly_detection = args.anomaly_detection
 
+if anomaly_detection:
+    save_threshold = True
+    if dataset == 'helpdesk':
+        log_csv = pd.read_csv('data/finale.csv' , sep=',')
+        # Create the Event Log object as in the library pm4py
+        log_csv = dataframe_utils.convert_timestamp_columns_in_df(log_csv)
+        log_csv = log_csv.sort_values('Complete Timestamp')
+        # Mapping case name reflecting temporal order
+        case_ids = log_csv.drop_duplicates('Case ID')
+        case_ids['case:concept:name'] = np.arange(1, len(case_ids)+1)
+        mapping = dict(zip(case_ids['Case ID'], case_ids['case:concept:name'].map(str)))
+        log_csv['case:concept:name'] = log_csv['Case ID'].map(mapping)  
+        log_csv.rename(columns={'Complete Timestamp': 'time:timestamp',
+                                'Activity': 'concept:name'}, inplace=True)
+        parameters = {
+            log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ID_KEY: 'case:concept:name',
+            log_converter.Variants.TO_EVENT_LOG.value.Parameters.CASE_ATTRIBUTE_PREFIX: 'case:'}
+        event_log = log_converter.apply(log_csv, parameters=parameters,
+                                        variant=log_converter.Variants.TO_EVENT_LOG)
+    elif dataset == 'bpic2012':
+        event_log = pm4py.read_xes('data/BPI_Challenge_2012.xes')
+
+    #breakpoint()
+    anomalies = anomaly_detection_isolation_forest(event_log)
 # Start analysis - import dataset
 # change read config in order to return also the case id
 datasets, builder_ds = import_dataset(dataset, ds_type, tfds_id, batch_size)
@@ -151,6 +184,7 @@ for ds, num_examples, ds_name in datasets:
     target_case = np.asarray(['0'])
     rel_dict = dict()
     rel_dict_one_model = dict()
+    case_selected_numpy = []
     for batch_idx, batch_data in enumerate(ds):
 
         input_data = []
@@ -229,17 +263,27 @@ for ds, num_examples, ds_name in datasets:
             case_names = target_case[1:]
             #breakpoint()
             case_selected = target_data_case[prob_unc_mask]
-            case_selected = case_selected.reshape((-1, prob_unc_mask.shape[1]))
-            for num_row in range(case_selected.shape[0]):
-                with open(os.path.join(model_dir, 'saved_cases_threshold_{}.txt'.format(np.round(unc_threshold, 4))), 'a') as file:
-                    file.write("{}\n".format(case_selected[num_row, 0]))
+            #for num_row in range(case_selected.shape[0]):
+            if case_selected.size != 0:
+                case_selected = case_selected.reshape((-1, prob_unc_mask.shape[1]))
+                case_selected_numpy = np.hstack((case_selected_numpy, 
+                                                 np.asarray(case_selected)[:, 0]))
+            #with open(os.path.join(
+            #    model_dir, 'saved_cases_threshold_{}_{}.txt'.format(
+            #        np.round(unc_threshold, 4), ds_name)), 'a') as file:
+                #file.write("{}\n".format(case_selected[num_row, 0]))
             #breakpoint()
 
-        if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (save_threshold or plot_threshold)):
+        #if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (save_threshold or plot_threshold)):
+        if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (plot_threshold)):
             sequences_plot(prob_unc_mask, acc_single, check_cond_wrong, random_idx_plot, input_data, u_t,
                            u_a, batch_size, plot_threshold, target_data, mask, plot_wrong_preds,
                            vocabulary_plot, out_prob, out_prob_tot_distr, model_type, 
                            batch_idx, title_text, count_wrong, count_seq, num_wrong_preds)
+    with open(os.path.join(
+        model_dir, 'saved_cases_threshold_{}_{}.npy'.format(
+            np.round(unc_threshold, 4), ds_name.split()[0])), 'wb') as file:
+        np.save(file, case_selected_numpy)
 
     if plot_reliability_diagram:
         ece_ensemble = expected_calibration_error(rel_dict)
@@ -340,3 +384,19 @@ for ds, num_examples, ds_name in datasets:
                       u_a_array_single_right, u_t_array_single_wrong, u_a_array_single,
                       u_e_array_single_right, u_e_array_single_wrong, u_e_array_single,
                       title_text)
+
+    if anomaly_detection:
+        #breakpoint()
+        mask_case = np.in1d(anomalies, target_case)
+        masked_anomalies = np.ma.masked_array(anomalies, mask=~mask_case)
+        ds_anomalies = masked_anomalies.compressed()
+
+        with open(os.path.join(
+            model_dir, 'anomalies_IF_{}.npy'.format(ds_name.split()[0])), 'wb') as file:
+            np.save(file, ds_anomalies)
+        common_anomalies_mask = np.in1d(case_selected_numpy, ds_anomalies)
+        masked_common_anomalies = np.ma.masked_array(case_selected_numpy, 
+                                                     mask=~common_anomalies_mask)
+        common_anomalies = masked_common_anomalies.compressed()
+        print(len(common_anomalies)/len(ds_anomalies))
+        print(len(common_anomalies)/len(case_selected_numpy))

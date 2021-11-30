@@ -50,7 +50,7 @@ parser.add_argument('--model_dir',
 
 args = parser.parse_args()
 dataset = args.dataset
-features_name = os.path.join('models_features', dataset, args.features)
+features_name = os.path.join('features', dataset, args.features)
 num_heads = args.num_heads
 feed_forward_dim = args.feed_forward_dim
 num_layers = args.num_layers
@@ -61,7 +61,7 @@ num_models_ensamble = args.ensamble_number
 uncal_model_dir = args.model_dir
 calibration = args.temperature_scaling
 
-uncal_model_dir = 'models_ensamble/{}/{}'.format(dataset, uncal_model_dir)
+uncal_model_dir = 'models/{}/{}'.format(dataset, uncal_model_dir)
 if calibration and (isinstance(uncal_model_dir, type(None)) or not os.path.exists(uncal_model_dir)):
     raise ValueError('An existing model to calibrate must be provided')
 
@@ -91,13 +91,13 @@ embed_dim = sum([feature['output-dim'] for feature in features])
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True, reduction='none')
 optimizer = tf.keras.optimizers.Adam()
     
-ensamble_list = glob.glob('models_ensamble/{}/ensamble*'.format(dataset))
+ensamble_list = glob.glob('models/{}/ensamble*'.format(dataset))
 num = 0
 for ensamble in ensamble_list:
     if int(ensamble.split('_')[2]) > num:
         num = int(ensamble.split('_')[2])
 if not calibration:
-    model_dir = 'models_ensamble/{}/ensamble_{}'.format(dataset, int(num)+1)
+    model_dir = 'models/{}/ensamble_{}'.format(dataset, int(num)+1)
     os.makedirs(model_dir)
     copyfile(features_name, os.path.join(model_dir, 'features.params'))
 else:

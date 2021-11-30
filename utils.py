@@ -54,7 +54,7 @@ def expected_calibration_error(rel_dict):
 
 def anomaly_detection_isolation_forest(log):
     log = interval_lifecycle.assign_lead_cycle_time(log, parameters={
-        constans.PARAMETER_CONSTANT_START_TIMESTAMP_KEY: "start_timestamp",
+        constants.PARAMETER_CONSTANT_START_TIMESTAMP_KEY: "start_timestamp",
         constants.PARAMETER_CONSTANT_TIMESTAMP_KEY: "time:timestamp"
     })
     data, features_names = log_to_features.apply(log, 
@@ -262,7 +262,7 @@ def load_models(model_dir, dataset, tfds_id, model_type):
 def process_args(parser):
     args = parser.parse_args()
     dataset = args.dataset
-    model_dir = os.path.join('models_ensamble', args.dataset, args.model_directory)
+    model_dir = os.path.join('models', args.dataset, args.model_directory)
     if not os.path.isdir(model_dir):
         raise OSError('Directory {} does not exist'.format(model_dir)) 
 
