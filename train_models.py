@@ -20,23 +20,32 @@ parser.add_argument('dataset', help='training dataset',
                     choices=['helpdesk', 'bpic2012'])
 parser.add_argument('features', 
                     help='yaml file specifying training features (e.g. act_res_time.params)')
-parser.add_argument('--num_heads', help='number of heads in multi-head attention',
+parser.add_argument('--num_heads',
+                    help='number of heads in multi-head attention. Default to 2',
                     default=2, type=int)
-parser.add_argument('--feed_forward_dim', help='units in feed forward layers',
+parser.add_argument('--feed_forward_dim',
+                    help='units in feed forward layers. Default to 512',
                     default=512, type=int)
-parser.add_argument('--num_layers', help='number of layers',
+parser.add_argument('--num_layers',
+                    help='number of layers. Default to 1',
                     default=1, type=int)
-parser.add_argument('--epochs', help='number of training epochs',
+parser.add_argument('--epochs',
+                    help='number of training epochs. Default to 100',
                     default=100, type=int)
-parser.add_argument('--patience', help='epochs of patience before stopping the training',
+parser.add_argument('--patience',
+                    help='epochs of patience before stopping the training. Default to 10',
                     default=10, type=int)
-parser.add_argument('--batch_size', help='size of training batches',
+parser.add_argument('--batch_size',
+                    help='size of training batches. Default to 32',
                     default=32, type=int)
-parser.add_argument('--ensamble_number', help='number of models in the ensamble',
+parser.add_argument('--ensamble_number',
+                    help='number of models in the ensamble. Default to 5',
                     default=5, type=int)
-parser.add_argument('--temperature_scaling', help='calibration of existing model',
+parser.add_argument('--temperature_scaling',
+                    help='calibration of existing model. Default to False',
                     default=False, type=bool)
-parser.add_argument('--model_dir', help='directory of the model to calibrate',
+parser.add_argument('--model_dir',
+                    help='directory of the model to calibrate. Default to None',
                     default=None)
 
 args = parser.parse_args()

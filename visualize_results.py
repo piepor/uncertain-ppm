@@ -28,45 +28,63 @@ parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
                     choices=['helpdesk', 'bpic2012'])
 parser.add_argument('model_directory', help='directory where the ensamble models are saved')
-parser.add_argument('--model_calibrated', help='load model that have been calibrated',
-        default=False, type=bool)
-parser.add_argument('--plot_entire_sequences', help='plot the output distribution of N random sequences',
-        default=0, type=int)
-parser.add_argument('--plot_wrong_predictions', help='plot N output distribution of wrong predictions',
-        default=0, type=int)
-parser.add_argument('--dataset_type', help='choose what segment of dataset to use between training, validation and test. Default is all',
-        default='all', choices=['training', 'validation', 'test', 'all'])
-parser.add_argument('--model_type', help='choose the type of algorithm used to estimate uncertainty: MC dropout or ensamble. Default to ensamble',
-        default='ensamble', choices=['MC-dropout', 'ensamble'])
-parser.add_argument('--samples_number', help='number of sample for the MC dropout',
-        default=5, type=int)
-parser.add_argument('--batch_size', help='size of batches',
-        default=64, type=int)
-parser.add_argument('--uncertainty_threshold', help='uncertainty threshold to select cases', 
-        default=0.4, type=float)
-parser.add_argument('--plot_cases_threshold', help='plot cases below the threshold', 
-        default=False, type=bool)
-parser.add_argument('--save_cases_threshold', help='save cases below the threshold', 
-        default=False, type=bool)
-parser.add_argument('--plot_mean_accuracy_vs_uncertainty', help='plot mean seqeunces accuracy vs uncertainty', 
-        default=False, type=bool)
-parser.add_argument('--plot_event_probability_vs_uncertainty', help='plot single event accuracy vs uncertainty', 
-        default=True, type=bool)
-parser.add_argument('--plot_event_correctness_vs_uncertainty', help='plot single event correctness vs uncertainty', 
-        default=False, type=bool)
-parser.add_argument('--plot_box_plot_uncertainty', help='plot box plot of uncertainties', 
-        default=False, type=bool)
-parser.add_argument('--plot_distributions', help='plot distribution of uncertainties', 
-        default=False, type=bool)
-parser.add_argument('--plot_reliability_diagram', help='plot reliability diagram', 
-        default=True, type=bool)
-parser.add_argument('--plot_accuracy_vs_uncertainty', help='box plot of accuracy vs uncertainty', 
-        default=True, type=bool)
+parser.add_argument('--model_calibrated', 
+                    help='load model that have been calibrated. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_entire_sequences',
+                    help='plot the output distribution of N random sequences. Default to 0',
+                    default=0, type=int)
+parser.add_argument('--plot_wrong_predictions',
+                    help='plot N output distribution of wrong predictions. Default to 0',
+                    default=0, type=int)
+parser.add_argument('--dataset_type',
+                    help='choose what segment of dataset to use between training, validation and test. Default to all',
+                    default='all', choices=['training', 'validation', 'test', 'all'])
+parser.add_argument('--model_type',
+                    help='choose the type of algorithm used to estimate uncertainty: MC dropout or ensamble. Default to ensamble',
+                    default='ensamble', choices=['MC-dropout', 'ensamble'])
+parser.add_argument('--samples_number',
+                    help='number of sample for the MC dropout. Default to 5',
+                    default=5, type=int)
+parser.add_argument('--batch_size',
+                    help='size of batches. Default to 64',
+                    default=64, type=int)
+parser.add_argument('--uncertainty_threshold',
+                    help='uncertainty threshold to select cases. Default to 0.4', 
+                    default=0.4, type=float)
+parser.add_argument('--plot_cases_threshold',
+                    help='plot cases below the threshold. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--save_cases_threshold',
+                    help='save cases below the threshold. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_mean_accuracy_vs_uncertainty',
+                    help='plot mean seqeunces accuracy vs uncertainty. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_event_probability_vs_uncertainty',
+                    help='plot single event accuracy vs uncertainty. Default to True', 
+                    default=True, type=bool)
+parser.add_argument('--plot_event_correctness_vs_uncertainty',
+                    help='plot single event correctness vs uncertainty. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_box_plot_uncertainty',
+                    help='plot box plot of uncertainties. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_distributions',
+                    help='plot distribution of uncertainties. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--plot_reliability_diagram',
+                    help='plot reliability diagram. Default to True', 
+                    default=True, type=bool)
+parser.add_argument('--plot_accuracy_vs_uncertainty',
+                    help='box plot of accuracy vs uncertainty. Default to True', 
+                    default=True, type=bool)
 parser.add_argument('--plot_proportions', 
-                    help='box plot of right and wrong predictions normalize with the percentage of data in bin.', 
-        default=False, type=bool)
-parser.add_argument('--tfds_id', help='extract also the case id from dataset', 
-        default=True, type=bool)
+                    help='box plot of right and wrong predictions normalize with the percentage of data in bin. Default to False', 
+                    default=False, type=bool)
+parser.add_argument('--tfds_id',
+                    help='extract also the case id from dataset. Default to True', 
+                    default=True, type=bool)
 
 # Parse and check arguments
 args = parser.parse_args()
@@ -213,7 +231,7 @@ for ds, num_examples, ds_name in datasets:
             case_selected = target_data_case[prob_unc_mask]
             case_selected = case_selected.reshape((-1, prob_unc_mask.shape[1]))
             for num_row in range(case_selected.shape[0]):
-                with open('saved_cases.txt', 'a') as file:
+                with open(os.path.join(model_dir, 'saved_cases_threshold_{}.txt'.format(np.round(unc_threshold, 4))), 'a') as file:
                     file.write("{}\n".format(case_selected[num_row, 0]))
             #breakpoint()
 
