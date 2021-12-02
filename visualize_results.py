@@ -18,6 +18,7 @@ from utils import single_accuracies, get_targets_probability, compute_features
 from utils import compute_bin_data, import_dataset, load_models
 from utils import process_args, compute_distributions, anomaly_detection_isolation_forest
 from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
+from utils import get_case_percentage, get_variants_percentage
 from plot_utils import accuracy_uncertainty_plot, proportions_plot
 from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
 from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
@@ -398,5 +399,23 @@ for ds, num_examples, ds_name in datasets:
         masked_common_anomalies = np.ma.masked_array(case_selected_numpy, 
                                                      mask=~common_anomalies_mask)
         common_anomalies = masked_common_anomalies.compressed()
+        common_variants = set()
+        total_selected_variants = set()
+        anomalous_variants = set()
+        total_variants_perc, total_variants = get_variants_percentage(event_log)
+        variant_case_dict = dict()
+        for case in case_selected_numpy:
+            variant, percentage = get_case_percentage(event_log, case, total_variants_perc)
+            variant_case_dict[variant] = []
+
+        for common_anomaly in common_anomalies:
+            variant, percentage = get_case_percentage(event_log, common_anomaly, total_variants_perc)
+            common_variants.add((variant, percentage))
+        for case in case_selected_numpy:
+            variant, percentage = get_case_percentage(event_log, case, total_variants_perc)
+            total_selected_variants.add((variant, percentage))
+            variant_case_dict[variant].append(case)
+        other_selected_variants = total_selected_variants.difference(common_variants)
+        breakpoint()
         print(len(common_anomalies)/len(ds_anomalies))
         print(len(common_anomalies)/len(case_selected_numpy))

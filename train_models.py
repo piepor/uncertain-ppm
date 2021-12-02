@@ -214,7 +214,7 @@ for cont in range(num_models_ensamble):
         if wait >= patience:
             break
     
-    model.save(model_path)
+    #model.save(model_path)
 
 # compute ensamble accuracy
 vali_accuracy_ensamble = tf.keras.metrics.Mean(name='vali_accuracy_ensamble')

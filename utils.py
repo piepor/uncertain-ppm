@@ -12,6 +12,31 @@ from pm4py.algo.transformation.log_to_features import algorithm as log_to_featur
 import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
+from pm4py.statistics.traces.generic.log import case_statistics
+import pm4py
+
+def get_variants_percentage(log):
+    variants_count = case_statistics.get_variant_statistics(log)
+    variants_count = sorted(variants_count, key=lambda x: x['count'], reverse=True)
+    tot_sum = 0
+    for variant in variants_count:
+        tot_sum += variant['count']
+    variants_count_perc = []
+    for variant in variants_count:
+        variants_count_perc.append({'variant': variant['variant'],
+                                    'count': variant['count'],
+                                    'perc': variant['count']/tot_sum})
+    return variants_count_perc, variants_count
+
+def get_case_percentage(log, case_id, variants):
+    filtered_log = pm4py.filter_log(lambda x: x.attributes['concept:name'] == str(case_id), log) 
+    case_events = ''
+    for event in filtered_log[0]:
+        case_events = case_events + ',' + event['concept:name']
+    case_events = case_events[1:]
+    case_perc = list(filter(lambda x: x['variant']==case_events, variants))
+    case_perc = case_perc[0]['perc']
+    return case_events, case_perc
 
 def compute_bin_data(u_t_array_single, acc_array_single):
     bin_size_perc = 0.15
