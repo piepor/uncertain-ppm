@@ -18,7 +18,9 @@ from utils import single_accuracies, get_targets_probability, compute_features
 from utils import compute_bin_data, import_dataset, load_models
 from utils import process_args, compute_distributions, anomaly_detection_isolation_forest
 from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
-from utils import get_case_percentage, get_variants_percentage
+from utils import get_case_percentage, get_variants_percentage, filter_variant
+from utils import get_variant_characteristics, get_case_statistics, extract_case
+from utils import get_case_characteristic
 from plot_utils import accuracy_uncertainty_plot, proportions_plot
 from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
 from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
@@ -416,6 +418,22 @@ for ds, num_examples, ds_name in datasets:
             total_selected_variants.add((variant, percentage))
             variant_case_dict[variant].append(case)
         other_selected_variants = total_selected_variants.difference(common_variants)
+        for variant in total_selected_variants:
+            if variant[1] > 0.1:
+                filtered_log = filter_variant(event_log, variant[0])
+                features_type = {'Resource': 'categorical', 'product': 'categorical',
+                                 'seriousness_2': 'categorical', 'responsible_section': 'categorical',
+                                 'service_level': 'categorical', 'service_type': 'categorical',
+                                 'workgroup': 'categorical', 'day_part': 'categorical', 'week_day': 'categorical'}
+                features = {'Resource', 'product', 'seriousness_2', 'responsible_section',
+                            'service_level', 'service_type', 'workgroup'}
+                completion_time, features_dict = get_variant_characteristics(filtered_log, features)
+                case_id = variant_case_dict[variant[0]][0]
+                case_seq = extract_case(case_id, event_log)
+                case_dict = get_case_characteristic(case_seq, features)
+                case_stats = get_case_statistics(case_dict, features_dict, features_type,
+                                                 completion_time, case_seq)
+                breakpoint()
         breakpoint()
         print(len(common_anomalies)/len(ds_anomalies))
         print(len(common_anomalies)/len(case_selected_numpy))

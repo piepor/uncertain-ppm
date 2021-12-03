@@ -13,7 +13,78 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.ensemble import IsolationForest
 from pm4py.statistics.traces.generic.log import case_statistics
+from pm4py.objects.log.obj import EventLog
+from scipy.stats import percentileofscore
 import pm4py
+
+def extract_case(case_id, log):
+    case = None
+    for trace in log:
+        if trace.attributes['concept:name'] == str(case_id):
+            case = trace
+    if case is None:
+        raise Exception('Case not found')
+    return case
+
+def get_variant_characteristics(filtered_log, features):
+    #breakpoint()
+    completion_time = list()
+    features_dict = {key: list() for key in features}
+    features_dict['day_part'] = list()
+    features_dict['week_day'] = list()
+    for trace in filtered_log:
+        completion_time.append(trace[-1]['time:timestamp'] - trace[0]['time:timestamp'])
+        for event in trace:
+            for feature in features:
+                features_dict[feature].append(event[feature])
+            features_dict['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
+            features_dict['week_day'].append(event['time:timestamp'].isoweekday())
+    return completion_time, features_dict
+
+def get_case_characteristic(case, features):
+    case_dict = dict()
+    for feature in features:
+        case_dict[feature] = list()
+    case_dict['day_part'] = list()
+    case_dict['week_day'] = list()
+    for event in case:
+        for feature in features:
+            case_dict[feature].append(event[feature])
+        case_dict['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
+        case_dict['week_day'].append(event['time:timestamp'].isoweekday())
+    return case_dict
+
+def get_case_statistics(case_dict, features_dict, features_type, completion_time, case_seq):
+    case_stats = dict()
+    for feature in case_dict:
+        unique_values = set(case_dict[feature])
+        case_stats[feature] = dict.fromkeys(unique_values)
+        if features_type[feature] == 'categorical':
+            for unique_value in unique_values:
+                perc = case_dict[feature].count(unique_value) / features_dict[feature].count(unique_value)
+                case_stats[feature][unique_value] = perc
+        elif features_type[feature] == 'continuous':
+            perc = percentileofscore(features_dict[feature], unique_value)
+    seconds_completion_time = [time_data.seconds + time_data.days*24*3600 for time_data in completion_time]
+    duration_case = case_seq[-1]['time:timestamp'] - case_seq[0]['time:timestamp']
+    duration_case = duration_case.seconds + duration_case.days*24*3600
+    case_stats['completion_time'] = percentileofscore(seconds_completion_time, duration_case)
+    return case_stats
+
+def get_variant_from_case(case):
+    variant = ''
+    for event in case:
+        variant += ',{}'.format(event['concept:name'])
+    return variant[1:]
+
+def filter_variant(log, variant):
+    filtered_log = EventLog(list(), attributes=log.attributes, extensions=log.extensions, 
+                            classifiers=log.classifiers, omni_present=log.omni_present, properties=log.properties)
+    for trace in log:
+        case_variant = get_variant_from_case(trace) 
+        if case_variant == variant:
+            filtered_log.append(trace)
+    return filtered_log
 
 def get_variants_percentage(log):
     variants_count = case_statistics.get_variant_statistics(log)
