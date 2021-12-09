@@ -85,8 +85,8 @@ class Bpic2012(tfds.core.GeneratorBasedBuilder):
                      'amount': preprocessed_trace['amount'],
                      'relative_time': preprocessed_trace['relative_time'],
                      'day_part': preprocessed_trace['day_part'],
+                     'week_day': preprocessed_trace['week_day'],
                      'case_id': preprocessed_trace['case_id']}
-                     'week_day': preprocessed_trace['week_day']}
 
 def preprocess_trace(trace):
     """
@@ -99,7 +99,7 @@ def preprocess_trace(trace):
     for count, event in enumerate(trace):
         if count == 0:
             event_date = event['time:timestamp']
-            trace_properties['case_id'] = trace.attributes['concept:name']
+            trace_properties['case_id'] = [trace.attributes['concept:name']]
             #trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
             #trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
         trace_properties['case_id'].append(trace.attributes['concept:name'])

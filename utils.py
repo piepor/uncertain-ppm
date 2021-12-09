@@ -58,7 +58,7 @@ def extract_case(case_id, log, dataset):
         raise Exception('Case not found')
     return case
 
-def get_variant_characteristics(filtered_log, features):
+def get_variant_characteristics(filtered_log, features, features_type):
     #breakpoint()
     features_dict = {key: list() for key in features.keys()}
     features_dict['day_part'] = list()
@@ -68,38 +68,75 @@ def get_variant_characteristics(filtered_log, features):
         for count, event in enumerate(trace):
             for feature in features.keys():
                 if features[feature] == 'event':
-                    features_dict[feature].append(event[feature])
+                    try:
+                        value = event[feature]
+                    except:
+                        if features_type[feature] == 'categorical':
+                            value = 'None'
+                        elif features_type[feature] == 'continuous':
+                            value = 0
+                    features_dict[feature].append(value)
                 elif features[feature] == 'trace' and count == 0:
-                    features_dict[feature].append(trace.attributes[feature])
+                    try:
+                        value = trace.attributes[feature]
+                    except:
+                        if features_type[feature] == 'categorical':
+                            value = 'None'
+                        elif features_type[feature] == 'continuous':
+                            value = 0
+                    features_dict[feature].append(value)
             features_dict['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
             features_dict['week_day'].append(event['time:timestamp'].isoweekday())
         features_dict['completion_time'].append(trace[-1]['time:timestamp'] - trace[0]['time:timestamp'])
     return features_dict
 
-def get_case_characteristic(case, features):
+def get_case_characteristic(case, features, features_type):
     case_dict = dict()
     for feature in features:
-        case_dict[feature] = list()
+        if features[feature] == 'event':
+            case_dict[feature] = list()
+        elif features[feature] == 'trace':
+            case_dict[feature] = 0
     case_dict['day_part'] = list()
     case_dict['week_day'] = list()
-    for event in case:
+    for count, event in enumerate(case):
         for feature in features:
-            case_dict[feature].append(event[feature])
+            if features[feature] == 'event':
+                try:
+                    value = event[feature]
+                except:
+                    if features_type[feature] == 'categorical':
+                        value = 'None'
+                    elif features_type[feature] == 'continuous':
+                        value = 0
+                case_dict[feature].append(value)
+            elif features[feature] == 'trace' and count == 0:
+                try:
+                    value = case.attributes[feature]
+                except:
+                    if features_type[feature] == 'categorical':
+                        value = 'None'
+                    elif features_type[feature] == 'continuous':
+                        value = 0
+                case_dict[feature] = value
         case_dict['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
         case_dict['week_day'].append(event['time:timestamp'].isoweekday())
     return case_dict
 
 def get_case_statistics(case_dict, features_dict, features_type, case_seq):
+    #breakpoint()
     case_stats = dict()
     for feature in case_dict:
-        unique_values = set(case_dict[feature])
-        case_stats[feature] = dict.fromkeys(unique_values)
         if features_type[feature] == 'categorical':
+            unique_values = set(case_dict[feature])
+            case_stats[feature] = dict.fromkeys(unique_values)
             for unique_value in unique_values:
                 perc = case_dict[feature].count(unique_value) / features_dict[feature].count(unique_value)
                 case_stats[feature][unique_value] = perc
         elif features_type[feature] == 'continuous':
-            perc = percentileofscore(features_dict[feature], unique_value)
+            numerical_attributes = [float(elem) for elem in features_dict[feature]]
+            perc = percentileofscore(numerical_attributes, float(case_dict[feature]))
+            case_stats[feature] = perc
     seconds_completion_time = [time_data.seconds + time_data.days*24*3600 for time_data in features_dict['completion_time']]
     duration_case = case_seq[-1]['time:timestamp'] - case_seq[0]['time:timestamp']
     duration_case = duration_case.seconds + duration_case.days*24*3600
@@ -338,7 +375,7 @@ def import_dataset(dataset, ds_type, tfds_id, batch_size):
     if dataset == 'helpdesk':
         padded_shapes, padding_values, vocabulary_act, features_type, features_variant = helpdesk_utils(tfds_id)
     elif dataset == 'bpic2012':
-        padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
+        padded_shapes, padding_values, vocabulary_act, vocabulary_res, features_type, features_variant = bpic2012_utils(tfds_id)
     padded_ds_train = ds_train.padded_batch(batch_size, 
             padded_shapes=padded_shapes,
             padding_values=padding_values).prefetch(tf.data.AUTOTUNE)

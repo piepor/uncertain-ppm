@@ -22,10 +22,10 @@ from utils import binary_crossentropy, max_multiclass_crossentropy, expected_cal
 from utils import get_case_percentage, get_variants_percentage, filter_variant
 from utils import get_variant_characteristics, get_case_statistics, extract_case
 from utils import get_case_characteristic, predict_case, accuracy_top_k
-from plot_utils import accuracy_uncertainty_plot, proportions_plot
-from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
-from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
-from plot_utils import event_correctness_plot, event_probability_plot
+from utils_plot import accuracy_uncertainty_plot, proportions_plot
+from utils_plot import mean_accuracy_plot, distributions_plot, box_plot_func
+from utils_plot import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
+from utils_plot import event_correctness_plot, event_probability_plot
 #from sklearn.stats import linregress
 from statsmodels.stats.weightstats import DescrStatsW
 import pm4py
@@ -100,6 +100,9 @@ parser.add_argument('--tfds_id',
 parser.add_argument('--anomaly_detection',
                     help='Run anomaly detection with Isolation Forest. Default to None', 
                     default=False, type=bool)
+parser.add_argument('--variant_threshold',
+                    help='Threshold on variant frequency in the event log for visualizing characteristics of anomalies. Default to 0.1', 
+                    default=0.1, type=float)
 
 # Parse and check arguments
 args = parser.parse_args()
@@ -118,6 +121,7 @@ unc_threshold = args.uncertainty_threshold
 plot_threshold = args.plot_cases_threshold
 save_threshold = args.save_cases_threshold
 batch_size = args.batch_size
+variant_threshold = args.variant_threshold
 acc_threshold = 0.5
 k_top = args.top_k_accuracy
 # plot stats
@@ -161,8 +165,10 @@ if anomaly_detection:
     elif dataset == 'bpic2012':
         event_log = pm4py.read_xes('data/BPI_Challenge_2012.xes')
         for trace in event_log:
+            trace.attributes['Case ID'] = trace.attributes['concept:name']
             for event in trace:
                 event['concept:name'] = '{}_{}'.format(event['concept:name'], event['lifecycle:transition'])
+                event['Case ID'] = 'Case {}'.format(trace.attributes['concept:name'])
 
     #breakpoint()
     anomalies = anomaly_detection_isolation_forest(event_log)
@@ -420,6 +426,7 @@ for ds, num_examples, ds_name in datasets:
         total_variants_perc, total_variants = get_variants_percentage(event_log)
         variant_case_dict = dict()
         for case in case_selected_numpy:
+            #breakpoint()
             variant, percentage = get_case_percentage(event_log, case, total_variants_perc)
             variant_case_dict[variant] = []
 
@@ -432,12 +439,16 @@ for ds, num_examples, ds_name in datasets:
             variant_case_dict[variant].append(case)
         other_selected_variants = total_selected_variants.difference(common_variants)
         total_variants_stats = dict()
+        #breakpoint()
         for variant in total_selected_variants:
-            if variant[1] > 0.001:
+            if variant[1] > variant_threshold:
                 #breakpoint()
                 total_variants_stats[variant[0]] = dict()
                 for feature in features_variant.keys():
-                    total_variants_stats[variant[0]][feature] = dict()
+                    if features_type[feature] == 'categorical':
+                        total_variants_stats[variant[0]][feature] = dict()
+                    elif features_type[feature] == 'continuous':
+                        total_variants_stats[variant[0]][feature] = list()
                 total_variants_stats[variant[0]]['day_part'] = dict()
                 total_variants_stats[variant[0]]['week_day'] = dict()
                 total_variants_stats[variant[0]]['completion_time'] = list()
@@ -449,11 +460,11 @@ for ds, num_examples, ds_name in datasets:
 #                                 'workgroup': 'categorical', 'day_part': 'categorical', 'week_day': 'categorical'}
 #                features_variant = {'Resource':'event', 'product':'event', 'seriousness_2':'event', 'responsible_section': 'event',
 #                        'service_level': 'event', 'service_type': 'event', 'workgroup':'event'}
-                features_dict = get_variant_characteristics(filtered_log, features_variant)
+                features_dict = get_variant_characteristics(filtered_log, features_variant, features_type)
                 for case_id in variant_case_dict[variant[0]]:
                     #case_id = variant_case_dict[variant[0]][0]
                     case_seq = extract_case(case_id, event_log, dataset)
-                    case_dict = get_case_characteristic(case_seq, features_variant)
+                    case_dict = get_case_characteristic(case_seq, features_variant, features_type)
                     case_stats = get_case_statistics(case_dict, features_dict, features_type, case_seq)
                     for feature in total_variants_stats[variant[0]].keys():
                         if isinstance(case_stats[feature], dict):
@@ -477,6 +488,7 @@ for ds, num_examples, ds_name in datasets:
                 col = count%2 + 1
                 if isinstance(total_variants_stats[variant][feature], dict):
                     for value in total_variants_stats[variant][feature].keys():
+                        #breakpoint()
                         if max(total_variants_stats[variant][feature][value]) > max_y:
                             max_y = max(total_variants_stats[variant][feature][value]) + 0.2
                         fig.add_trace(go.Box(y=total_variants_stats[variant][feature][value], 
@@ -492,15 +504,20 @@ for ds, num_examples, ds_name in datasets:
                 if not feature == 'completion_time':
                     if features_type[feature] == 'categorical':
                         fig.update_yaxes(range=[0, max_y], row=row, col=col)
+                    elif features_type[feature] == 'continuous':
+                        fig.update_xaxes(range=[0, 100], row=row, col=col)
                 else:
                     fig.update_xaxes(range=[0, 100], row=row, col=col)
                 count += 1
-            fig.update_layout(showlegend=False, title_text='{} - {}'.format(variant, variant_perc_dict[variant]))
+            title = 'Event log frequence: {} - anomalous cases in test set: {}'.format(np.round(variant_perc_dict[variant], 4), 
+                    len(variant_case_dict[variant]))
+            fig.update_layout(showlegend=False, title_text=title)
             fig.show(renderer='chromium')
+            #breakpoint()
 
 #        case_id = 4561
 #        out_ensamble, out_single, target = predict_case(models, case_id, ds, builder_ds, dropout, num_samples, features, model_type)
-        print(len(common_anomalies)/len(ds_anomalies))
-        print(len(common_anomalies)/len(case_selected_numpy))
+#        print(len(common_anomalies)/len(ds_anomalies))
+#        print(len(common_anomalies)/len(case_selected_numpy))
 
 print("Top {} accuracy: {}".format(k_top, np.asarray(acc_top_k_array).mean()))

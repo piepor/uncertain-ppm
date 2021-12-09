@@ -11,7 +11,7 @@ import argparse
 from utils import load_models
 
 from utils import compute_features, loss_function, accuracy_function, compute_input_signature
-from model_utils import GeneralModel, ModelWithTemperature
+from utils_model import GeneralModel, ModelWithTemperature
 from helpdesk_utils import helpdesk_utils
 from bpic2012_utils import bpic2012_utils
 
