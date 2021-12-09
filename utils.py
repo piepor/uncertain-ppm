@@ -17,29 +17,64 @@ from pm4py.objects.log.obj import EventLog
 from scipy.stats import percentileofscore
 import pm4py
 
-def extract_case(case_id, log):
+def accuracy_top_k(target_data, output_matrix, k):
+    indx = np.argsort(output_matrix)
+    indx_top_k = indx[:, :, -k:] 
+    acc_no_mask = np.equal(indx_top_k, target_data[:, :, np.newaxis]).any(axis=2)
+    masked = np.ma.masked_equal(target_data, 0).mask
+    acc_masked = np.ma.masked_array(acc_no_mask, mask=masked)
+    return acc_masked.mean()
+
+def predict_case(models, case_id, data, builder_ds, dropout, num_samples, features, model_type):
+    for batch_idx, batch_data in enumerate(data):
+        #exs = [ex.numpy().decode('utf-8') for ex in batch_data['tfds_id']]
+        #target_data_case = [idx_to_int(tfds_id, builder_ds) for tfds_id in exs] 
+        target_data_case = [ex.numpy()[0] for ex in batch['case_id']]
+        breakpoint()
+        if int(case_id) in target_data_case:
+            breakpoint()
+            index = np.where(np.asarray(target_data_case) == int(case_id))
+            index = index[0][0]
+            input_data = []
+            for feature in features:
+                input_data.append(tf.expand_dims(batch_data[feature['name']][index, :-1], axis=0))
+            target_data = batch_data['activity'][index, 1:]
+            u_a, out_ensamble, out_single = compute_distributions(
+                models, model_type, input_data, dropout, num_samples)
+    return out_ensamble, out_single, target_data
+
+def extract_case(case_id, log, dataset):
     case = None
     for trace in log:
-        if trace.attributes['concept:name'] == str(case_id):
-            case = trace
+        if dataset == 'helpdesk':
+            if trace[0]['Case ID'].split()[1] == str(case_id):
+                case = trace
+        elif dataset == 'bpic2012':
+            if trace.attributes['concept:name'] == str(case_id):
+                case = trace
+        else:
+            raise Exception('Wrong dataset name')
     if case is None:
         raise Exception('Case not found')
     return case
 
 def get_variant_characteristics(filtered_log, features):
     #breakpoint()
-    completion_time = list()
-    features_dict = {key: list() for key in features}
+    features_dict = {key: list() for key in features.keys()}
     features_dict['day_part'] = list()
     features_dict['week_day'] = list()
+    features_dict['completion_time'] = list()
     for trace in filtered_log:
-        completion_time.append(trace[-1]['time:timestamp'] - trace[0]['time:timestamp'])
-        for event in trace:
-            for feature in features:
-                features_dict[feature].append(event[feature])
+        for count, event in enumerate(trace):
+            for feature in features.keys():
+                if features[feature] == 'event':
+                    features_dict[feature].append(event[feature])
+                elif features[feature] == 'trace' and count == 0:
+                    features_dict[feature].append(trace.attributes[feature])
             features_dict['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
             features_dict['week_day'].append(event['time:timestamp'].isoweekday())
-    return completion_time, features_dict
+        features_dict['completion_time'].append(trace[-1]['time:timestamp'] - trace[0]['time:timestamp'])
+    return features_dict
 
 def get_case_characteristic(case, features):
     case_dict = dict()
@@ -54,7 +89,7 @@ def get_case_characteristic(case, features):
         case_dict['week_day'].append(event['time:timestamp'].isoweekday())
     return case_dict
 
-def get_case_statistics(case_dict, features_dict, features_type, completion_time, case_seq):
+def get_case_statistics(case_dict, features_dict, features_type, case_seq):
     case_stats = dict()
     for feature in case_dict:
         unique_values = set(case_dict[feature])
@@ -65,7 +100,7 @@ def get_case_statistics(case_dict, features_dict, features_type, completion_time
                 case_stats[feature][unique_value] = perc
         elif features_type[feature] == 'continuous':
             perc = percentileofscore(features_dict[feature], unique_value)
-    seconds_completion_time = [time_data.seconds + time_data.days*24*3600 for time_data in completion_time]
+    seconds_completion_time = [time_data.seconds + time_data.days*24*3600 for time_data in features_dict['completion_time']]
     duration_case = case_seq[-1]['time:timestamp'] - case_seq[0]['time:timestamp']
     duration_case = duration_case.seconds + duration_case.days*24*3600
     case_stats['completion_time'] = percentileofscore(seconds_completion_time, duration_case)
@@ -100,7 +135,9 @@ def get_variants_percentage(log):
     return variants_count_perc, variants_count
 
 def get_case_percentage(log, case_id, variants):
-    filtered_log = pm4py.filter_log(lambda x: x.attributes['concept:name'] == str(case_id), log) 
+    #filtered_log = pm4py.filter_log(lambda x: x.attributes['concept:name'] == str(case_id), log) 
+    #breakpoint()
+    filtered_log = pm4py.filter_log(lambda x: x[0]['Case ID'].split()[1] == str(case_id), log) 
     case_events = ''
     for event in filtered_log[0]:
         case_events = case_events + ',' + event['concept:name']
@@ -299,7 +336,7 @@ def import_dataset(dataset, ds_type, tfds_id, batch_size):
     ds_vali = builder_ds.as_dataset(read_config=read_config, split='train[70%:85%]')
     ds_test = builder_ds.as_dataset(read_config=read_config, split='train[85%:]')
     if dataset == 'helpdesk':
-        padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id)
+        padded_shapes, padding_values, vocabulary_act, features_type, features_variant = helpdesk_utils(tfds_id)
     elif dataset == 'bpic2012':
         padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
     padded_ds_train = ds_train.padded_batch(batch_size, 
@@ -331,12 +368,12 @@ def import_dataset(dataset, ds_type, tfds_id, batch_size):
 
 def load_models(model_dir, dataset, tfds_id, model_type):
     if dataset == 'helpdesk':
-        padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id)
+        padded_shapes, padding_values, vocabulary_act, features_type, features_variant = helpdesk_utils(tfds_id)
         features = compute_features(os.path.join(model_dir, 'features.params'), {'activity': vocabulary_act})
         output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
                                                          num_oov_indices=1)
     elif dataset == 'bpic2012':
-        padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id)
+        padded_shapes, padding_values, vocabulary_act, vocabulary_res, features_type, features_variant = bpic2012_utils(tfds_id)
         features = compute_features(os.path.join(model_dir, 'features.params'), 
                                     {'activity': vocabulary_act, 'resource': vocabulary_res})
         output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
@@ -353,7 +390,7 @@ def load_models(model_dir, dataset, tfds_id, model_type):
             model = tf.keras.models.load_model(model_path)
             models.append(model)
             
-    return features, output_preprocess, models, vocabulary_act
+    return features, output_preprocess, models, vocabulary_act, features_type, features_variant
 
 def process_args(parser):
     args = parser.parse_args()

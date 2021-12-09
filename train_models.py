@@ -72,7 +72,7 @@ if dataset == 'helpdesk':
     ds_train = tfds.load(dataset, split='train[:70%]', shuffle_files=True)
     ds_vali = tfds.load(dataset, split='train[70%:85%]')
     ds_test = tfds.load(dataset, split='train[85%:]')
-    padded_shapes, padding_values, vocabulary_act = helpdesk_utils(tfds_id=False)
+    padded_shapes, padding_values, vocabulary_act, _, _ = helpdesk_utils(tfds_id=False)
     features = compute_features(features_name, {'activity': vocabulary_act})
     output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
                                                      num_oov_indices=1)
@@ -80,7 +80,7 @@ elif dataset == 'bpic2012':
     ds_train = tfds.load(dataset, split='train[:70%]', shuffle_files=True)
     ds_vali = tfds.load(dataset, split='train[70%:85%]')
     ds_test = tfds.load(dataset, split='train[85%:]')
-    padded_shapes, padding_values, vocabulary_act, vocabulary_res = bpic2012_utils(tfds_id=False)
+    padded_shapes, padding_values, vocabulary_act, vocabulary_res, _, _ = bpic2012_utils(tfds_id=False)
     features = compute_features(features_name, 
                                 {'activity': vocabulary_act, 'resource': vocabulary_res})
     output_preprocess = tf.keras.layers.StringLookup(vocabulary=vocabulary_act,
@@ -94,8 +94,8 @@ optimizer = tf.keras.optimizers.Adam()
 ensamble_list = glob.glob('models/{}/ensamble*'.format(dataset))
 num = 0
 for ensamble in ensamble_list:
-    if int(ensamble.split('_')[2]) > num:
-        num = int(ensamble.split('_')[2])
+    if int(ensamble.split('_')[-1]) > num:
+        num = int(ensamble.split('_')[-1])
 if not calibration:
     model_dir = 'models/{}/ensamble_{}'.format(dataset, int(num)+1)
     os.makedirs(model_dir)
@@ -214,7 +214,7 @@ for cont in range(num_models_ensamble):
         if wait >= patience:
             break
     
-    #model.save(model_path)
+    model.save(model_path)
 
 # compute ensamble accuracy
 vali_accuracy_ensamble = tf.keras.metrics.Mean(name='vali_accuracy_ensamble')

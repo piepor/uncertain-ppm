@@ -7,6 +7,7 @@ import tensorflow_datasets as tfds
 import plotly.graph_objects as go
 import numpy as np
 from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import plotly.figure_factory as ff
 import argparse
 import re
@@ -20,7 +21,7 @@ from utils import process_args, compute_distributions, anomaly_detection_isolati
 from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
 from utils import get_case_percentage, get_variants_percentage, filter_variant
 from utils import get_variant_characteristics, get_case_statistics, extract_case
-from utils import get_case_characteristic
+from utils import get_case_characteristic, predict_case, accuracy_top_k
 from plot_utils import accuracy_uncertainty_plot, proportions_plot
 from plot_utils import mean_accuracy_plot, distributions_plot, box_plot_func
 from plot_utils import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
@@ -60,6 +61,9 @@ parser.add_argument('--batch_size',
 parser.add_argument('--uncertainty_threshold',
                     help='uncertainty threshold to select cases. Default to 0.4', 
                     default=0.4, type=float)
+parser.add_argument('--top_k_accuracy',
+                    help='select k elements from output distribution for accuracy. Default to 6', 
+                    default=6, type=int)
 parser.add_argument('--plot_cases_threshold',
                     help='plot cases below the threshold. Default to False', 
                     default=False, type=bool)
@@ -115,6 +119,7 @@ plot_threshold = args.plot_cases_threshold
 save_threshold = args.save_cases_threshold
 batch_size = args.batch_size
 acc_threshold = 0.5
+k_top = args.top_k_accuracy
 # plot stats
 model_calibrated = args.model_calibrated
 model_calibrated_title = 'Not Calibrated'
@@ -155,13 +160,16 @@ if anomaly_detection:
                                         variant=log_converter.Variants.TO_EVENT_LOG)
     elif dataset == 'bpic2012':
         event_log = pm4py.read_xes('data/BPI_Challenge_2012.xes')
+        for trace in event_log:
+            for event in trace:
+                event['concept:name'] = '{}_{}'.format(event['concept:name'], event['lifecycle:transition'])
 
     #breakpoint()
     anomalies = anomaly_detection_isolation_forest(event_log)
 # Start analysis - import dataset
 # change read config in order to return also the case id
-datasets, builder_ds = import_dataset(dataset, ds_type, tfds_id, batch_size)
-features, output_preprocess, models, vocabulary_act = load_models(model_dir, dataset, tfds_id, model_type)
+datasets, builder_ds  = import_dataset(dataset, ds_type, tfds_id, batch_size)
+features, output_preprocess, models, vocabulary_act, features_type, features_variant = load_models(model_dir, dataset, tfds_id, model_type)
 
 count_seq = 0
 count_wrong = 0
@@ -187,16 +195,20 @@ for ds, num_examples, ds_name in datasets:
     target_case = np.asarray(['0'])
     rel_dict = dict()
     rel_dict_one_model = dict()
-    case_selected_numpy = []
+    case_selected_numpy = list()
+    acc_top_k_array = list()
     for batch_idx, batch_data in enumerate(ds):
 
+        #breakpoint()
         input_data = []
         for feature in features:
             input_data.append(batch_data[feature['name']][:, :-1])
         target_data = batch_data['activity'][:, 1:]
         #breakpoint()
-        exs = [ex.numpy().decode('utf-8') for ex in batch_data['tfds_id']]
-        target_data_case = [idx_to_int(tfds_id, builder_ds) for tfds_id in exs] 
+        #exs = [ex.numpy().decode('utf-8') for ex in batch_data['tfds_id']]
+        exs = [ex.numpy()[0].decode('utf-8') for ex in batch_data['case_id']]
+        #target_data_case = [idx_to_int(tfds_id, builder_ds) for tfds_id in exs] 
+        target_data_case = [int(case) for case in exs] 
         target_data_case = target_data_case * np.ones_like(target_data).T
         target_data_case = target_data_case.T
         target_label = np.hstack([target_label, target_data.numpy().ravel()]) 
@@ -219,7 +231,8 @@ for ds, num_examples, ds_name in datasets:
 
         acc_single = single_accuracies(target_data, out_prob_tot_distr)
         acc_array_single = np.hstack([acc_array_single, acc_single.numpy().ravel()])
-        
+        acc_top_k = accuracy_top_k(target_data, out_prob_tot_distr, k=k_top)
+        acc_top_k_array.append(acc_top_k)        
         target_prob = get_targets_probability(target_data, out_prob_tot_distr)
         target_prob_array = np.hstack([target_prob_array, target_prob.numpy().ravel()])
 
@@ -418,22 +431,76 @@ for ds, num_examples, ds_name in datasets:
             total_selected_variants.add((variant, percentage))
             variant_case_dict[variant].append(case)
         other_selected_variants = total_selected_variants.difference(common_variants)
+        total_variants_stats = dict()
         for variant in total_selected_variants:
-            if variant[1] > 0.1:
+            if variant[1] > 0.001:
+                #breakpoint()
+                total_variants_stats[variant[0]] = dict()
+                for feature in features_variant.keys():
+                    total_variants_stats[variant[0]][feature] = dict()
+                total_variants_stats[variant[0]]['day_part'] = dict()
+                total_variants_stats[variant[0]]['week_day'] = dict()
+                total_variants_stats[variant[0]]['completion_time'] = list()
+                #breakpoint()
                 filtered_log = filter_variant(event_log, variant[0])
-                features_type = {'Resource': 'categorical', 'product': 'categorical',
-                                 'seriousness_2': 'categorical', 'responsible_section': 'categorical',
-                                 'service_level': 'categorical', 'service_type': 'categorical',
-                                 'workgroup': 'categorical', 'day_part': 'categorical', 'week_day': 'categorical'}
-                features = {'Resource', 'product', 'seriousness_2', 'responsible_section',
-                            'service_level', 'service_type', 'workgroup'}
-                completion_time, features_dict = get_variant_characteristics(filtered_log, features)
-                case_id = variant_case_dict[variant[0]][0]
-                case_seq = extract_case(case_id, event_log)
-                case_dict = get_case_characteristic(case_seq, features)
-                case_stats = get_case_statistics(case_dict, features_dict, features_type,
-                                                 completion_time, case_seq)
-                breakpoint()
-        breakpoint()
+#                features_type = {'Resource': 'categorical', 'product': 'categorical',
+#                                 'seriousness_2': 'categorical', 'responsible_section': 'categorical',
+#                                 'service_level': 'categorical', 'service_type': 'categorical',
+#                                 'workgroup': 'categorical', 'day_part': 'categorical', 'week_day': 'categorical'}
+#                features_variant = {'Resource':'event', 'product':'event', 'seriousness_2':'event', 'responsible_section': 'event',
+#                        'service_level': 'event', 'service_type': 'event', 'workgroup':'event'}
+                features_dict = get_variant_characteristics(filtered_log, features_variant)
+                for case_id in variant_case_dict[variant[0]]:
+                    #case_id = variant_case_dict[variant[0]][0]
+                    case_seq = extract_case(case_id, event_log, dataset)
+                    case_dict = get_case_characteristic(case_seq, features_variant)
+                    case_stats = get_case_statistics(case_dict, features_dict, features_type, case_seq)
+                    for feature in total_variants_stats[variant[0]].keys():
+                        if isinstance(case_stats[feature], dict):
+                            for value in case_stats[feature].keys():
+                                if isinstance(total_variants_stats[variant[0]][feature], dict):
+                                    if not value in total_variants_stats[variant[0]][feature].keys():
+                                        total_variants_stats[variant[0]][feature][value] = list([case_stats[feature][value]])
+                                    else:
+                                        total_variants_stats[variant[0]][feature][value].append(case_stats[feature][value])
+                        else:
+                            total_variants_stats[variant[0]][feature].append(case_stats[feature])
+        #breakpoint()
+        variant_perc_dict = {elem[0]:elem[1] for elem in total_selected_variants}
+        for variant in total_variants_stats.keys():
+            n_rows = int(np.ceil(len(total_variants_stats[variant].keys()) / 2))
+            fig = make_subplots(rows=n_rows, cols=2, subplot_titles=list(total_variants_stats[variant].keys()))
+            count = 0
+            max_y = 0
+            for feature in total_variants_stats[variant].keys():
+                row = int(np.floor(count/2)) + 1
+                col = count%2 + 1
+                if isinstance(total_variants_stats[variant][feature], dict):
+                    for value in total_variants_stats[variant][feature].keys():
+                        if max(total_variants_stats[variant][feature][value]) > max_y:
+                            max_y = max(total_variants_stats[variant][feature][value]) + 0.2
+                        fig.add_trace(go.Box(y=total_variants_stats[variant][feature][value], 
+                            name=value), row=row, col=col)
+                else:
+                    fig.add_trace(go.Histogram(x=total_variants_stats[variant][feature], xbins=dict(size=5)), row=row, col=col)
+                    #breakpoint()
+                count += 1
+            count = 0
+            for feature in total_variants_stats[variant].keys():
+                row = int(np.floor(count/2)) + 1
+                col = count%2 + 1
+                if not feature == 'completion_time':
+                    if features_type[feature] == 'categorical':
+                        fig.update_yaxes(range=[0, max_y], row=row, col=col)
+                else:
+                    fig.update_xaxes(range=[0, 100], row=row, col=col)
+                count += 1
+            fig.update_layout(showlegend=False, title_text='{} - {}'.format(variant, variant_perc_dict[variant]))
+            fig.show(renderer='chromium')
+
+#        case_id = 4561
+#        out_ensamble, out_single, target = predict_case(models, case_id, ds, builder_ds, dropout, num_samples, features, model_type)
         print(len(common_anomalies)/len(ds_anomalies))
         print(len(common_anomalies)/len(case_selected_numpy))
+
+print("Top {} accuracy: {}".format(k_top, np.asarray(acc_top_k_array).mean()))

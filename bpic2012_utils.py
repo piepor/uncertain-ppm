@@ -7,7 +7,8 @@ def bpic2012_utils(tfds_id):
         'amount': [None],
         'relative_time': [None],
         'day_part': [None],
-        'week_day': [None]
+        'week_day': [None],
+        'case_id': [None],
     }
     padding_values = {
         'activity': '<PAD>',
@@ -16,6 +17,7 @@ def bpic2012_utils(tfds_id):
         'relative_time': tf.cast(0, dtype=tf.int32),
         'day_part': tf.cast(0, dtype=tf.int64),
         'week_day': tf.cast(0, dtype=tf.int64),
+        'case_id': '<PAD>',
     }
     if tfds_id:
         padded_shapes['tfds_id'] = ()
@@ -46,4 +48,9 @@ def bpic2012_utils(tfds_id):
                       '10124', '10821', '11169', '11319', '11009', '11269', '10863', '11029',
                       '10939', '11003', '10933', '10912', '10913']
 
-    return padded_shapes, padding_values, vocabulary_act, vocabulary_res
+    features_type = {'org:resource': 'categorical', 'AMOUNT_REQ': 'continuous',
+                     'day_part': 'categorical', 'week_day': 'categorical'}
+
+    features_variant = {'org:resource':'event', 'AMOUNT_REQ': 'trace'}
+
+    return padded_shapes, padding_values, vocabulary_act, vocabulary_res, features_type, features_variant

@@ -14,7 +14,8 @@ def helpdesk_utils(tfds_id):
         'variant': [None],    
         'relative_time': [None],
         'day_part': [None],
-        'week_day': [None]
+        'week_day': [None],
+        'case_id': [None]
     }
     padding_values = {
         'activity': '<PAD>',
@@ -30,6 +31,7 @@ def helpdesk_utils(tfds_id):
         'relative_time': tf.cast(0, dtype=tf.int32),
         'day_part': tf.cast(0, dtype=tf.int64),
         'week_day': tf.cast(0, dtype=tf.int64),
+        'case_id': '<PAD>',
     }
     if tfds_id:
         padded_shapes['tfds_id'] = ()
@@ -40,4 +42,11 @@ def helpdesk_utils(tfds_id):
                   'Schedule intervention', 'VERIFIED', 'Closed', 'Wait',
                   'Require upgrade', 'Assign seriousness', 'Insert ticket', 'INVALID']
 
-    return padded_shapes, padding_values, vocabulary
+    features_type = {'Resource': 'categorical', 'product': 'categorical',
+                     'seriousness_2': 'categorical', 'responsible_section': 'categorical',
+                     'service_level': 'categorical', 'service_type': 'categorical',
+                     'workgroup': 'categorical', 'day_part': 'categorical', 'week_day': 'categorical'}
+    features_variant = {'Resource':'event', 'product':'event', 'seriousness_2':'event', 'responsible_section': 'event',
+            'service_level': 'event', 'service_type': 'event', 'workgroup':'event'}
+
+    return padded_shapes, padding_values, vocabulary, features_type, features_variant

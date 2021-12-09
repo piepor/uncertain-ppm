@@ -57,7 +57,8 @@ class Bpic2012(tfds.core.GeneratorBasedBuilder):
                 'amount': tf.int32,
                 'relative_time': tf.int32,
                 'day_part': tfds.features.ClassLabel(num_classes=3),
-                'week_day': tfds.features.ClassLabel(num_classes=8)
+                'week_day': tfds.features.ClassLabel(num_classes=8),
+                'case_id': tfds.features.Text()
                 }),
 
             supervised_keys=None,  # Set to `None` to disable
@@ -84,6 +85,7 @@ class Bpic2012(tfds.core.GeneratorBasedBuilder):
                      'amount': preprocessed_trace['amount'],
                      'relative_time': preprocessed_trace['relative_time'],
                      'day_part': preprocessed_trace['day_part'],
+                     'case_id': preprocessed_trace['case_id']}
                      'week_day': preprocessed_trace['week_day']}
 
 def preprocess_trace(trace):
@@ -97,8 +99,10 @@ def preprocess_trace(trace):
     for count, event in enumerate(trace):
         if count == 0:
             event_date = event['time:timestamp']
-            trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
-            trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
+            trace_properties['case_id'] = trace.attributes['concept:name']
+            #trace_properties['day_part'] = [int(event['time:timestamp'].hour > 13)+1]
+            #trace_properties['week_day'] = [event['time:timestamp'].isoweekday()]
+        trace_properties['case_id'].append(trace.attributes['concept:name'])
         delta_t = event['time:timestamp'] - event_date
         event_date = event['time:timestamp']
         trace_properties['activity'].append('{}_{}'.format(event['concept:name'], 
@@ -119,5 +123,6 @@ def preprocess_trace(trace):
     trace_properties['relative_time'].append(0)
     trace_properties['day_part'].append(int(event['time:timestamp'].hour > 13)+1)
     trace_properties['week_day'].append(event['time:timestamp'].isoweekday())
+    trace_properties['case_id'].append(trace.attributes['concept:name'])
 
     return trace_properties
