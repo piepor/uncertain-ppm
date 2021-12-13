@@ -173,14 +173,16 @@ def get_variants_percentage(log):
 
 def get_case_percentage(log, case_id, variants):
     #filtered_log = pm4py.filter_log(lambda x: x.attributes['concept:name'] == str(case_id), log) 
-    #breakpoint()
     filtered_log = pm4py.filter_log(lambda x: x[0]['Case ID'].split()[1] == str(case_id), log) 
     case_events = ''
     for event in filtered_log[0]:
         case_events = case_events + ',' + event['concept:name']
     case_events = case_events[1:]
     case_perc = list(filter(lambda x: x['variant']==case_events, variants))
-    case_perc = case_perc[0]['perc']
+    if len(case_perc) == 0:
+        case_perc = 0
+    else:
+        case_perc = case_perc[0]['perc']
     return case_events, case_perc
 
 def compute_bin_data(u_t_array_single, acc_array_single):
@@ -379,6 +381,10 @@ def import_dataset(dataset, ds_type, tfds_id, batch_size):
     padded_ds_train = ds_train.padded_batch(batch_size, 
             padded_shapes=padded_shapes,
             padding_values=padding_values).prefetch(tf.data.AUTOTUNE)
+    case_id_train = 0
+    for batch_data in padded_ds_train:
+        case_id_train = np.hstack([case_id_train, batch_data['case_id'][:, 0].numpy().astype('U13')])
+    case_id_train = case_id_train[1:]
     train_examples = len(ds_train)
     padded_ds_vali = ds_vali.padded_batch(batch_size, 
             padded_shapes=padded_shapes,
@@ -401,7 +407,7 @@ def import_dataset(dataset, ds_type, tfds_id, batch_size):
         datasets = [(padded_ds_test, test_examples, 'test set')]
     else:
         raise ValueError('Dataset type not understood')
-    return datasets, builder_ds
+    return datasets, builder_ds, case_id_train
 
 def load_models(model_dir, dataset, tfds_id, model_type):
     if dataset == 'helpdesk':

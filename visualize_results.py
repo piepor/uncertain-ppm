@@ -32,7 +32,7 @@ import pm4py
 from pm4py.objects.conversion.log import converter as log_converter
 from pm4py.objects.log.util import dataframe_utils
 import pandas as pd
-
+tf.keras.backend.clear_session()
 parser = argparse.ArgumentParser()
 parser.add_argument('dataset', help='choose the dataset',
                     choices=['helpdesk', 'bpic2012'])
@@ -143,6 +143,10 @@ plot_proportions = args.plot_proportions
 tfds_id = args.tfds_id
 anomaly_detection = args.anomaly_detection
 
+# Start analysis - import dataset
+# change read config in order to return also the case id
+datasets, builder_ds, case_id_train  = import_dataset(dataset, ds_type, tfds_id, batch_size)
+
 if anomaly_detection:
     save_threshold = True
     if dataset == 'helpdesk':
@@ -170,11 +174,9 @@ if anomaly_detection:
                 event['concept:name'] = '{}_{}'.format(event['concept:name'], event['lifecycle:transition'])
                 event['Case ID'] = 'Case {}'.format(trace.attributes['concept:name'])
 
-    #breakpoint()
+    event_log_train = pm4py.filter_log(lambda x: x[0]['Case ID'].split()[1] in case_id_train, event_log) 
     anomalies = anomaly_detection_isolation_forest(event_log)
-# Start analysis - import dataset
-# change read config in order to return also the case id
-datasets, builder_ds  = import_dataset(dataset, ds_type, tfds_id, batch_size)
+
 features, output_preprocess, models, vocabulary_act, features_type, features_variant = load_models(model_dir, dataset, tfds_id, model_type)
 
 count_seq = 0
@@ -423,7 +425,7 @@ for ds, num_examples, ds_name in datasets:
         common_variants = set()
         total_selected_variants = set()
         anomalous_variants = set()
-        total_variants_perc, total_variants = get_variants_percentage(event_log)
+        total_variants_perc, total_variants = get_variants_percentage(event_log_train)
         variant_case_dict = dict()
         for case in case_selected_numpy:
             #breakpoint()
@@ -434,6 +436,7 @@ for ds, num_examples, ds_name in datasets:
             variant, percentage = get_case_percentage(event_log, common_anomaly, total_variants_perc)
             common_variants.add((variant, percentage))
         for case in case_selected_numpy:
+            #variant, percentage = get_case_percentage(event_log, case, total_variants_perc)
             variant, percentage = get_case_percentage(event_log, case, total_variants_perc)
             total_selected_variants.add((variant, percentage))
             variant_case_dict[variant].append(case)
@@ -441,6 +444,7 @@ for ds, num_examples, ds_name in datasets:
         total_variants_stats = dict()
         #breakpoint()
         for variant in total_selected_variants:
+            #if variant[1] > variant_threshold or variant[1] == 0:
             if variant[1] > variant_threshold:
                 #breakpoint()
                 total_variants_stats[variant[0]] = dict()
@@ -494,7 +498,8 @@ for ds, num_examples, ds_name in datasets:
                         fig.add_trace(go.Box(y=total_variants_stats[variant][feature][value], 
                             name=value), row=row, col=col)
                 else:
-                    fig.add_trace(go.Histogram(x=total_variants_stats[variant][feature], xbins=dict(size=5)), row=row, col=col)
+                    bin_size = 5
+                    fig.add_trace(go.Histogram(x=total_variants_stats[variant][feature], xbins=dict(size=bin_size)), row=row, col=col)
                     #breakpoint()
                 count += 1
             count = 0
@@ -505,11 +510,11 @@ for ds, num_examples, ds_name in datasets:
                     if features_type[feature] == 'categorical':
                         fig.update_yaxes(range=[0, max_y], row=row, col=col)
                     elif features_type[feature] == 'continuous':
-                        fig.update_xaxes(range=[0, 100], row=row, col=col)
+                        fig.update_xaxes(range=[0, 100+bin_size], row=row, col=col)
                 else:
-                    fig.update_xaxes(range=[0, 100], row=row, col=col)
+                    fig.update_xaxes(range=[0, 100+bin_size], row=row, col=col)
                 count += 1
-            title = 'Event log frequence: {} - anomalous cases in test set: {}'.format(np.round(variant_perc_dict[variant], 4), 
+            title = 'Variant frequence in training event log: {} - anomalous cases in test set: {}'.format(np.round(variant_perc_dict[variant], 4), 
                     len(variant_case_dict[variant]))
             fig.update_layout(showlegend=False, title_text=title)
             fig.show(renderer='chromium')
@@ -520,4 +525,5 @@ for ds, num_examples, ds_name in datasets:
 #        print(len(common_anomalies)/len(ds_anomalies))
 #        print(len(common_anomalies)/len(case_selected_numpy))
 
+tf.keras.backend.clear_session()
 print("Top {} accuracy: {}".format(k_top, np.asarray(acc_top_k_array).mean()))
