@@ -1,6 +1,26 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
+import numpy as np
+
+def get_angles(pos, i, d_model):
+  angle_rates = 1 / np.power(10000, (2 * (i//2)) / np.float32(d_model))
+  return pos * angle_rates
+
+def positional_encoding(position, d_model):
+  angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+                          np.arange(d_model)[np.newaxis, :],
+                          d_model)
+
+  # apply sin to even indices in the array; 2i
+  angle_rads[:, 0::2] = np.sin(angle_rads[:, 0::2])
+
+  # apply cos to odd indices in the array; 2i+1
+  angle_rads[:, 1::2] = np.cos(angle_rads[:, 1::2])
+
+  pos_encoding = angle_rads[np.newaxis, ...]
+
+  return tf.cast(pos_encoding, dtype=tf.float32)
 
 
 class PreprocessingModel(tf.keras.Model):
@@ -92,9 +112,11 @@ class TransformerBlock(layers.Layer):
 
 
 class GeneralModel(tf.keras.Model):
-    def __init__(self, num_layers, features, ds, embed_dim, num_heads, feed_forward_dim, num_voc):
+    def __init__(self, num_layers, features, ds, embed_dim, num_heads, 
+            feed_forward_dim, num_voc, maximum_positional_embedding=10000):
         super().__init__()
         self.embedding_model = PreprocessingModel(features, ds)
+        self.pos_emb = positional_encoding(maximum_positional_embedding, embed_dim)
         self.transformer_block = TransformerBlock(embed_dim, num_heads, feed_forward_dim)
         self.transformer = tf.keras.Sequential()
         self.ffn_output = tf.keras.layers.Dense(num_voc)
@@ -103,6 +125,9 @@ class GeneralModel(tf.keras.Model):
 
     def call(self, inputs):
         feature_embedding = self.embedding_model(inputs)
+        # add positional embedding
+        seq_len = tf.shape(feature_embedding)[1]
+        feature_embedding += self.pos_emb[:, :seq_len, :]
         out = self.transformer(feature_embedding)
         out = self.ffn_output(out)
         return out

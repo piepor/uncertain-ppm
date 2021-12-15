@@ -1,0 +1,8 @@
+Number of heads: 2
+Feed forward dimension: 1024
+Number of layers: 2
+Number of epochs: 100
+Epochs of patience: 10
+Size of batches: 32
+Number of ensamble models: 5
+Final validation accuracy: 0.8469851613044739

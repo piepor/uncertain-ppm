@@ -204,7 +204,9 @@ for ds, num_examples, ds_name in datasets:
     rel_dict = dict()
     rel_dict_one_model = dict()
     case_selected_numpy = list()
-    acc_top_k_array = list()
+    #acc_top_k_array = list()
+    acc_top_k_dict = {k_class: list() for k_class in range(1, k_top+1)}
+    acc_single_model = list()
     for batch_idx, batch_data in enumerate(ds):
 
         #breakpoint()
@@ -239,8 +241,11 @@ for ds, num_examples, ds_name in datasets:
 
         acc_single = single_accuracies(target_data, out_prob_tot_distr)
         acc_array_single = np.hstack([acc_array_single, acc_single.numpy().ravel()])
-        acc_top_k = accuracy_top_k(target_data, out_prob_tot_distr, k=k_top)
-        acc_top_k_array.append(acc_top_k)        
+        acc_single_model.append(accuracy_top_k(target_data, out_prob, k=1))
+        for k_class in acc_top_k_dict.keys():
+            acc_top_k = accuracy_top_k(target_data, out_prob_tot_distr, k=k_class)
+            acc_top_k_dict[k_class].append(acc_top_k)        
+        #breakpoint()
         target_prob = get_targets_probability(target_data, out_prob_tot_distr)
         target_prob_array = np.hstack([target_prob_array, target_prob.numpy().ravel()])
 
@@ -373,6 +378,7 @@ for ds, num_examples, ds_name in datasets:
         data = np.asarray([np.cumsum(u_t_plot)-u_t_plot, acc_plot]).T
         results = DescrStatsW(data, perc_data)
         corr_coeff = results.corrcoef
+        #breakpoint()
         accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, '{} - Corr Coeff {}'.format(title_text, np.round(corr_coeff[0,1], 4)))
 
     prob_array = np.linspace(1e-6, 1-(1e-6), 500)
@@ -526,4 +532,8 @@ for ds, num_examples, ds_name in datasets:
 #        print(len(common_anomalies)/len(case_selected_numpy))
 
 tf.keras.backend.clear_session()
-print("Top {} accuracy: {}".format(k_top, np.asarray(acc_top_k_array).mean()))
+with open(os.path.join(model_dir, "top_{}_accuracies.txt".format(k_top)), "a") as file:
+    for k_class in acc_top_k_dict.keys():
+        print("Top {} accuracy: {}".format(k_class, np.asarray(acc_top_k_dict[k_class]).mean()))
+        file.write("Top {} accuracy: {}\n".format(k_class, np.asarray(acc_top_k_dict[k_class]).mean()))
+print("SINGLE MODEL accuracy {}".format(np.asarray(acc_single_model).mean()))

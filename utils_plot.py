@@ -42,6 +42,7 @@ def reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text,
     fig.update_xaxes(title_text='Confidence')
     fig.update_yaxes(title_text='Accuracy')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/reliability-diagram-{}.svg'.format(''.join(title_text.split())))
 
 def mean_accuracy_plot(unc, acc, unc_type, title_text):
     fig = go.Figure()
@@ -49,8 +50,9 @@ def mean_accuracy_plot(unc, acc, unc_type, title_text):
                              name='{} uncertainty'.format(unc_type)))
     fig.update_layout(title_text=title_text)
     fig.update_xaxes(title_text='{} uncertainty'.format(unc_type))
-    fig.update_yaxes(title_text='Mean sequence accuracy')
+    fig.update_yaxes(title_text='Mean sequence accuracy - {}'.format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/mean-accuracy-{}.svg'.format(''.join(title_text.split())))
 
 def proportions_plot(u_t_plot, perc_rigth_plot, perc_wrong_plot, title_text):
     fig = go.Figure()
@@ -60,6 +62,7 @@ def proportions_plot(u_t_plot, perc_rigth_plot, perc_wrong_plot, title_text):
                          width=u_t_plot, offset=0, name='wrong predictions'))
     fig.update_layout(title_text=title_text)
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/proportions-plot-{}.svg'.format(''.join(title_text.split())))
     return fig
 
 def accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text):
@@ -72,6 +75,7 @@ def accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text):
     fig.update_xaxes(title_text='total uncertainty')
     fig.update_yaxes(title_text='accuracy')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/accuracy-uncertainty-{}.svg'.format(''.join(title_text.split())))
     return fig
 
 def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single_wrong,
@@ -94,6 +98,7 @@ def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Assigned probability')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/event-probability-total-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_a_array_single_right, y=target_prob_array[acc_array_single==1],
@@ -104,6 +109,7 @@ def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single
     fig.update_xaxes(title_text='Aleatoric uncertainty')
     fig.update_yaxes(title_text='Assigned probability')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/event-probability-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_e_array_single_right, y=target_prob_array[acc_array_single==1],
@@ -114,6 +120,7 @@ def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single
     fig.update_xaxes(title_text='Epistemic uncertainty')
     fig.update_yaxes(title_text='Assigned probability')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/event-probability-epistemic-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_t_array_single_right, y=max_prob_event_array[acc_array_single==1],
@@ -131,6 +138,7 @@ def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Max probability predicted')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/event-probability-max-total-{}.svg'.format(''.join(title_text.split())))
 
 def event_correctness_plot(u_t_array_single, u_a_array_single, u_e_array_single,
                            acc_array_single, target_label_array, target_prob_array, title_text):
@@ -142,6 +150,7 @@ def event_correctness_plot(u_t_array_single, u_a_array_single, u_e_array_single,
     fig.update_xaxes(title_text='Total uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/point-pred-corr-total-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_a_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
@@ -151,6 +160,7 @@ def event_correctness_plot(u_t_array_single, u_a_array_single, u_e_array_single,
     fig.update_xaxes(title_text='Aleatoric uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/point-pred-corr-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=u_e_array_single[acc_array_single>-1], y=acc_array_single[acc_array_single>-1],
@@ -160,6 +170,7 @@ def event_correctness_plot(u_t_array_single, u_a_array_single, u_e_array_single,
     fig.update_xaxes(title_text='Epistemic uncertainty')
     fig.update_yaxes(title_text='Point prediction correctness')
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/point-pred-epistemic-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
 def distributions_plot(u_t_array_single, u_a_array_single, u_e_array_single, title_text):
     group_labels = ['Total uncertainty', 'Aleatoric uncertainty', 'Epistemic uncertainty']
@@ -167,6 +178,7 @@ def distributions_plot(u_t_array_single, u_a_array_single, u_e_array_single, tit
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.2)
     fig.update_layout(title_text=title_text)
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/distributions-{}.svg'.format(''.join(title_text.split())))
 
 def distributions_plot_right_wrong(u_t_array_single_right, u_t_array_single_wrong,
                                    u_a_array_single_right, u_a_array_single_wrong,
@@ -176,16 +188,19 @@ def distributions_plot_right_wrong(u_t_array_single_right, u_t_array_single_wron
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
     fig.update_layout(title_text="{} - Total uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/distributions-right-wrong-total-{}.svg'.format(''.join(title_text.split())))
 
     hist_data = [u_a_array_single_right, u_a_array_single_wrong]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
     fig.update_layout(title_text="{} - Aleatoric uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/distributions-right-wrong-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
     hist_data = [u_e_array_single_right, u_e_array_single_wrong]
     fig = ff.create_distplot(hist_data, group_labels, bin_size=.05)
     fig.update_layout(title_text="{} - Epistemic uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/distributions-right-wrong-epistemic-{}.svg'.format(''.join(title_text.split())))
 
 def box_plot_func(u_t_array_single_right, u_t_array_single_wrong, u_t_array_single,
                   u_a_array_single_right, u_a_array_single_wrong, u_a_array_single,
@@ -196,33 +211,39 @@ def box_plot_func(u_t_array_single_right, u_t_array_single_wrong, u_t_array_sing
     fig.add_trace(go.Box(y=u_t_array_single_wrong, name='Wrong predictions'))
     fig.update_layout(title_text="{} - Total uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-right-wrong-total-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_a_array_single_right, name='Right predictions'))
     fig.add_trace(go.Box(y=u_a_array_single_wrong, name='Wrong predictions'))
     fig.update_layout(title_text="{} - Aleatoric uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-right-wrong-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_e_array_single_right, name='Right predictions'))
     fig.add_trace(go.Box(y=u_e_array_single_wrong, name='Wrong predictions'))
     fig.update_layout(title_text="{} - Epistemic uncertainty".format(title_text))
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-right-wrong-epistemic-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_t_array_single, name='Total uncertainty'))
     fig.update_layout(title_text=title_text)
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-total-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_a_array_single, name='Aleatoric uncertainty'))
     fig.update_layout(title_text=title_text)
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-aleatoric-{}.svg'.format(''.join(title_text.split())))
 
     fig = go.Figure()
     fig.add_trace(go.Box(y=u_e_array_single, name='Epistemic uncertainty'))
     fig.update_layout(title_text=title_text)
     fig.show(renderer='chromium')
+    fig.write_image('saved_figures/models/boxplot-epistemic-{}.svg'.format(''.join(title_text.split())))
 
 def sequences_plot(prob_unc_mask, acc_single, check_cond_wrong, random_idx_plot, input_data, u_t,
                    u_a, batch_size, plot_threshold, target_data, mask, plot_wrong_preds,

@@ -8,7 +8,8 @@ import datetime
 import glob
 from shutil import copyfile
 import argparse
-from utils import load_models
+from utils import load_models, accuracy_top_k
+import numpy as np
 
 from utils import compute_features, loss_function, accuracy_function, compute_input_signature
 from utils_model import GeneralModel, ModelWithTemperature
@@ -107,7 +108,7 @@ else:
     except:
         pass
     copyfile(features_name, os.path.join(model_dir, 'features.params'))
-    features, output_preprocess, inner_models, vocabulary_act = load_models(
+    features, output_preprocess, inner_models, vocabulary_act, features_type, features_variant = load_models(
         uncal_model_dir, dataset, False, 'ensamble')
     ds_train = ds_vali
     models_names = [name for name in os.listdir(uncal_model_dir) if os.path.isdir(
@@ -224,6 +225,8 @@ for model_name in models_names:
     model_path = os.path.join(model_dir, model_name)
     model = tf.keras.models.load_model(model_path)
     models.append(model)
+final_acc = list()
+final_acc2 = list()
 for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, leave=False)):
     input_data = []
     for feature in features:
@@ -239,15 +242,14 @@ for step, batch_data in enumerate(tqdm(padded_ds_vali, desc='Vali', position=0, 
             return logits, target_data
         if n == 0:
             logits_total, target_data = vali_step_ensamble(input_data)
+            output_total = tf.nn.softmax(logits_total)
         else:
             logits_single, target_data = vali_step_ensamble(input_data)
             logits_total += logits_single
+            output_total += tf.nn.softmax(logits_single)
 
-    logits_total /= n
-
-    vali_accuracy_ensamble(accuracy_function(target_data, logits_total))
-
-print(vali_accuracy_ensamble.result())
+    output_total /= len(models)
+    final_acc.append(accuracy_function(target_data, output_total).numpy().mean())
 
 # save results and model characteristics in file
 with open(os.path.join(model_dir, "model_properties_results.txt"), "a") as file:
@@ -258,4 +260,4 @@ with open(os.path.join(model_dir, "model_properties_results.txt"), "a") as file:
     file.write("Epochs of patience: {}\n".format(patience))
     file.write("Size of batches: {}\n".format(batch_size))
     file.write("Number of ensamble models: {}\n".format(num_models_ensamble))
-    file.write("Final validation accuracy: {}\n".format(vali_accuracy_ensamble.result()))
+    file.write("Final validation accuracy: {}\n".format(np.asarray(final_acc).mean()))

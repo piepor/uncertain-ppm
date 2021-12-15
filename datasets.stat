@@ -1,0 +1,14 @@
+--- Helpdesk ---
+mean variant length: 4.66 +- 1.18
+mean dl: 0.5 +- 0.16
+vocabulary length: 16
+number of variants: 226
+number of traces :4580
+percentage of second variant wrt first: 0.2333
+--- Bpic2012 ---
+mean variant length: 20.04 +- 19.94
+mean dl: 0.39 +- 0.17
+vocabulary length: 38
+number of variants: 4366
+number of traces :13087
+percentage of second variant wrt first: 0.5459

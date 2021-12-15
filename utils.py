@@ -23,7 +23,8 @@ def accuracy_top_k(target_data, output_matrix, k):
     acc_no_mask = np.equal(indx_top_k, target_data[:, :, np.newaxis]).any(axis=2)
     masked = np.ma.masked_equal(target_data, 0).mask
     acc_masked = np.ma.masked_array(acc_no_mask, mask=masked)
-    return acc_masked.mean()
+    # round to 7 to follow tensorflow
+    return np.round(acc_masked.mean(axis=1).mean(axis=0), 7)
 
 def predict_case(models, case_id, data, builder_ds, dropout, num_samples, features, model_type):
     for batch_idx, batch_data in enumerate(data):
@@ -194,19 +195,26 @@ def compute_bin_data(u_t_array_single, acc_array_single):
     u_t_plot = []
     acc_plot = []
     perc_data = []
-    for count_bin in np.arange(0, max_unc, bin_size_perc):
+    for count_bin in np.arange(0, max_unc+bin_size_perc, bin_size_perc):
         tot_pred = u_t_array_single[
             (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
         acc_pred = acc_array_single[
             (u_t_array_single >= count_bin) & (u_t_array_single < count_bin+bin_size_perc)]
-        acc_plot.append(np.mean(acc_pred))
-        perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
-        perc_wrong = 1 - perc_right
-        perc_data_tot = len(tot_pred) / len(u_t_array_single)
-        perc_data.append(perc_data_tot)
-        perc_right_plot.append(perc_right*perc_data_tot)
-        perc_wrong_plot.append(perc_wrong*perc_data_tot)
-        u_t_plot.append(bin_size_perc)
+        if not(len(tot_pred) == 0 and len(acc_pred) == 0):
+            acc_plot.append(np.mean(acc_pred))
+            perc_right = len(tot_pred[acc_pred == 1]) / len(tot_pred)
+            perc_wrong = 1 - perc_right
+            perc_data_tot = len(tot_pred) / len(u_t_array_single)
+            perc_data.append(perc_data_tot)
+            perc_right_plot.append(perc_right*perc_data_tot)
+            perc_wrong_plot.append(perc_wrong*perc_data_tot)
+            u_t_plot.append(bin_size_perc)
+        else:
+            acc_plot.append(0)
+            perc_data.append(0)
+            perc_right_plot.append(0)
+            perc_wrong_plot.append(0)
+            u_t_plot.append(bin_size_perc)
     return u_t_plot, perc_right_plot, perc_wrong_plot, perc_data, acc_plot
 
 def expected_calibration_error(rel_dict):
