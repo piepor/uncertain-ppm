@@ -21,11 +21,11 @@ from utils import process_args, compute_distributions, anomaly_detection_isolati
 from utils import binary_crossentropy, max_multiclass_crossentropy, expected_calibration_error 
 from utils import get_case_percentage, get_variants_percentage, filter_variant
 from utils import get_variant_characteristics, get_case_statistics, extract_case
-from utils import get_case_characteristic, predict_case, accuracy_top_k
+from utils import get_case_characteristic, accuracy_top_k
 from utils_plot import accuracy_uncertainty_plot, proportions_plot
 from utils_plot import mean_accuracy_plot, distributions_plot, box_plot_func
 from utils_plot import sequences_plot, reliability_diagram_plot, distributions_plot_right_wrong
-from utils_plot import event_correctness_plot, event_probability_plot
+from utils_plot import event_correctness_plot, event_probability_plot, plot_case
 #from sklearn.stats import linregress
 from statsmodels.stats.weightstats import DescrStatsW
 import pm4py
@@ -103,6 +103,9 @@ parser.add_argument('--anomaly_detection',
 parser.add_argument('--variant_threshold',
                     help='Threshold on variant frequency in the event log for visualizing characteristics of anomalies. Default to 0.1', 
                     default=0.1, type=float)
+parser.add_argument('--predict_case',
+                    help='Case to predict', 
+                    default=0, type=int)
 
 # Parse and check arguments
 args = parser.parse_args()
@@ -142,6 +145,7 @@ plot_acc_unc = args.plot_accuracy_vs_uncertainty
 plot_proportions = args.plot_proportions
 tfds_id = args.tfds_id
 anomaly_detection = args.anomaly_detection
+predict_case = args.predict_case
 
 # Start analysis - import dataset
 # change read config in order to return also the case id
@@ -304,6 +308,10 @@ for ds, num_examples, ds_name in datasets:
             #breakpoint()
 
         #if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (save_threshold or plot_threshold)):
+        if predict_case in target_case[1:]:
+            plot_case(acc_single, input_data, u_t, target_data, vocabulary_plot,
+                    out_prob, out_prob_tot_distr, model_type, title_text, target_data_case, predict_case)
+            #breakpoint()
         if check_cond_wrong or check_cond_entire or (check_cond_tot_unc_prob and (plot_threshold)):
             sequences_plot(prob_unc_mask, acc_single, check_cond_wrong, random_idx_plot, input_data, u_t,
                            u_a, batch_size, plot_threshold, target_data, mask, plot_wrong_preds,
@@ -449,10 +457,18 @@ for ds, num_examples, ds_name in datasets:
         other_selected_variants = total_selected_variants.difference(common_variants)
         total_variants_stats = dict()
         #breakpoint()
+        count_variant_in_training = 0
+        count_perc_variant = 0
+        count_perc_variant2 = 0
         for variant in total_selected_variants:
             #if variant[1] > variant_threshold or variant[1] == 0:
-            if variant[1] > variant_threshold:
-                #breakpoint()
+            #breakpoint()
+            if variant[1] > 0:
+                if variant[1] > 0.001:
+                    count_perc_variant += 1
+                if variant[1] > 0.005:
+                    count_perc_variant2 += 1
+                count_variant_in_training += 1
                 total_variants_stats[variant[0]] = dict()
                 for feature in features_variant.keys():
                     if features_type[feature] == 'categorical':
@@ -489,47 +505,95 @@ for ds, num_examples, ds_name in datasets:
         #breakpoint()
         variant_perc_dict = {elem[0]:elem[1] for elem in total_selected_variants}
         for variant in total_variants_stats.keys():
-            n_rows = int(np.ceil(len(total_variants_stats[variant].keys()) / 2))
-            fig = make_subplots(rows=n_rows, cols=2, subplot_titles=list(total_variants_stats[variant].keys()))
-            count = 0
-            max_y = 0
-            for feature in total_variants_stats[variant].keys():
-                row = int(np.floor(count/2)) + 1
-                col = count%2 + 1
-                if isinstance(total_variants_stats[variant][feature], dict):
-                    for value in total_variants_stats[variant][feature].keys():
+            if variant_perc_dict[variant] > variant_threshold:
+                n_rows = int(np.ceil(len(total_variants_stats[variant].keys()) / 2))
+                fig = make_subplots(rows=n_rows, cols=2, subplot_titles=list(total_variants_stats[variant].keys()))
+                count = 0
+                max_y = 0
+                for feature in total_variants_stats[variant].keys():
+                    row = int(np.floor(count/2)) + 1
+                    col = count%2 + 1
+                    if isinstance(total_variants_stats[variant][feature], dict):
+                        for value in total_variants_stats[variant][feature].keys():
+                            #breakpoint()
+                            if max(total_variants_stats[variant][feature][value]) > max_y:
+                                max_y = max(total_variants_stats[variant][feature][value]) + 0.2
+                            fig.add_trace(go.Box(y=total_variants_stats[variant][feature][value], 
+                                name=value), row=row, col=col)
+                    else:
+                        bin_size = 5
+                        fig.add_trace(go.Histogram(x=total_variants_stats[variant][feature], xbins=dict(size=bin_size)), row=row, col=col)
                         #breakpoint()
-                        if max(total_variants_stats[variant][feature][value]) > max_y:
-                            max_y = max(total_variants_stats[variant][feature][value]) + 0.2
-                        fig.add_trace(go.Box(y=total_variants_stats[variant][feature][value], 
-                            name=value), row=row, col=col)
-                else:
-                    bin_size = 5
-                    fig.add_trace(go.Histogram(x=total_variants_stats[variant][feature], xbins=dict(size=bin_size)), row=row, col=col)
-                    #breakpoint()
-                count += 1
-            count = 0
-            for feature in total_variants_stats[variant].keys():
-                row = int(np.floor(count/2)) + 1
-                col = count%2 + 1
-                if not feature == 'completion_time':
-                    if features_type[feature] == 'categorical':
-                        fig.update_yaxes(range=[0, max_y], row=row, col=col)
-                    elif features_type[feature] == 'continuous':
+                    count += 1
+                count = 0
+                for feature in total_variants_stats[variant].keys():
+                    row = int(np.floor(count/2)) + 1
+                    col = count%2 + 1
+                    if not feature == 'completion_time':
+                        if features_type[feature] == 'categorical':
+                            fig.update_yaxes(range=[0, max_y], row=row, col=col)
+                        elif features_type[feature] == 'continuous':
+                            fig.update_xaxes(range=[0, 100+bin_size], row=row, col=col)
+                    else:
                         fig.update_xaxes(range=[0, 100+bin_size], row=row, col=col)
-                else:
-                    fig.update_xaxes(range=[0, 100+bin_size], row=row, col=col)
-                count += 1
-            title = 'Variant frequence in training event log: {} - anomalous cases in test set: {}'.format(np.round(variant_perc_dict[variant], 4), 
-                    len(variant_case_dict[variant]))
-            fig.update_layout(showlegend=False, title_text=title)
-            fig.show(renderer='chromium')
+                    count += 1
+                title = 'Variant frequence in training event log: {} - anomalous cases in test set: {}'.format(np.round(variant_perc_dict[variant], 4), 
+                        len(variant_case_dict[variant]))
+                fig.update_layout(showlegend=False, title_text=title)
+                fig.show(renderer='chromium')
             #breakpoint()
-
+        # extract feature stats
+        #breakpoint()
+        features_stats = dict()
+        features_stats['perc'] = list()
+        var_thres_perc = 0.001
+        for variant in total_variants_stats.keys():
+            if variant_perc_dict[variant] > var_thres_perc:
+                for feature in total_variants_stats[variant].keys():
+                    if not feature in features_stats.keys():
+                        features_stats[feature] = list()
+                    if isinstance(total_variants_stats[variant][feature], dict):
+                        for value in total_variants_stats[variant][feature].keys():
+                            features_stats[feature].extend(total_variants_stats[variant][feature][value])
+                    else:
+                        features_stats[feature].extend(total_variants_stats[variant][feature])
+                features_stats['perc'].append(variant_perc_dict[variant])
+        #breakpoint()
+        bin_size = 0.05
+        for feature in features_stats.keys():
+            #if feature == 'completion_time':
+            fig = go.Figure() 
+            if feature == 'perc':
+                bin_size = 0.001
+            elif feature == 'completion_time':
+                bin_size = 5
+                perc_quart = np.sum(np.less(features_stats[feature], 25))
+                perc_quart += np.sum(np.greater(features_stats[feature], 75))
+                perc_quart /= len(features_stats[feature])
+                print('percentage time completion in first/last quartile: {}'.format(perc_quart))
+            else:
+                if features_type[feature] == 'continuous':
+                    bin_size = 5
+                    perc_quart = np.sum(np.less(features_stats[feature], 25))
+                    perc_quart += np.sum(np.greater(features_stats[feature], 75))
+                    perc_quart /= len(features_stats[feature])
+                    print('percentage {} in first/last quartile: {}'.format(feature, perc_quart))
+                elif features_type[feature] == 'categorical':
+                    bin_size = 0.05
+            fig.add_trace(go.Histogram(x=features_stats[feature], xbins=dict(size=bin_size)))
+            #fig.add_trace(go.Histogram(x=features_stats[feature]))
+            fig.update_layout(title_text=feature)
+            fig.show(renderer='chromium')
+            fig.write_html('{}-{}-{}.html'.format(feature, var_thres_perc, title_text))
+        #breakpoint()
 #        case_id = 4561
 #        out_ensamble, out_single, target = predict_case(models, case_id, ds, builder_ds, dropout, num_samples, features, model_type)
 #        print(len(common_anomalies)/len(ds_anomalies))
 #        print(len(common_anomalies)/len(case_selected_numpy))
+if anomaly_detection:
+    print("percentage test variant in training: {}".format(count_variant_in_training/len(total_selected_variants)))
+    print("percentage test variant in training more than 0.001: {}".format(count_perc_variant/count_variant_in_training))
+    print("percentage test variant in training more than 0.005: {}".format(count_perc_variant/count_variant_in_training))
 
 tf.keras.backend.clear_session()
 with open(os.path.join(model_dir, "top_{}_accuracies.txt".format(k_top)), "a") as file:
