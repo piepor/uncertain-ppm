@@ -386,5 +386,5 @@ def plot_case(acc_single, input_data, u_t, target_data, vocabulary_plot,
                             paper_bgcolor='rgba(255,255,255,1)', plot_bgcolor='rgba(255,255,255,1)')
                     #fig.update_traces(opacity=0.6)
                     fig.show(renderer='chromium')
-                    fig.write_html('saved_figures/models/case{}-{}.html'.format(case_chosen, ''.join(title_text.split())))
+                    fig.write_html('saved_figures/models/case{}-{}-step{}.html'.format(case_chosen, ''.join(title_text.split()), j))
                     #breakpoint()
