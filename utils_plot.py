@@ -44,11 +44,14 @@ def reliability_diagram_plot(rel_dict, rel_dict_one_model, rel_bins, title_text,
     fig.add_hline(y=0.4, line_width=0.4, line_dash='dash', line_color='black')
     fig.add_hline(y=0.2, line_width=0.4, line_dash='dash', line_color='black')
     fig.update_layout(title_text='Reliability Diagram - {}'.format(title_text), paper_bgcolor='rgba(255,255,255,1)',
-            plot_bgcolor='rgba(255,255,255,1)')
+            plot_bgcolor='rgba(255,255,255,1)', font=dict(size=18))
     fig.update_xaxes(showline=True, linewidth=2, linecolor='black',
             title_text='Confidence', range=[0, 1.1])
-    fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
-            title_text='Accuracy', range=[0, 1.1])
+    if 'Helpdesk' in title_text:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black', rangemode='tozero')
+    else:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
+                title_text='Accuracy', range=[0, 1.1])
     fig.show(renderer='chromium')
     fig.write_image('saved_figures/models/reliability-diagram-{}.svg'.format(''.join(title_text.split())))
     fig.write_html('saved_figures/models/reliability-diagram-{}.html'.format(''.join(title_text.split())))
@@ -90,11 +93,14 @@ def accuracy_uncertainty_plot(u_t_plot, acc_plot, perc_data, title_text):
     fig.add_hline(y=0.4, line_width=0.4, line_dash='dash', line_color='black')
     fig.add_hline(y=0.2, line_width=0.4, line_dash='dash', line_color='black')
     fig.update_layout(title_text=title_text, paper_bgcolor='rgba(255,255,255,1)',
-            plot_bgcolor='rgba(255,255,255,1)')
+            plot_bgcolor='rgba(255,255,255,1)', font=dict(size=18))
     fig.update_xaxes(showline=True, linewidth=2, linecolor='black',
             title_text='Total Uncertainty', range=[0, np.cumsum(u_t_plot)[-1]+0.1])
-    fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
-            title_text='Accuracy', range=[0,1.1])
+    if 'Helpdesk' in title_text:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black', rangemode='tozero')
+    else:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
+                title_text='Accuracy', range=[0,1.1])
     #fig.update_traces(marker_line_color='rgb(8,48,107)')
     fig.update_traces(marker_line_color='rgb(0,0,128)', marker_line_width=2)
     fig.show(renderer='chromium')
@@ -126,13 +132,16 @@ def event_probability_plot(total_label, u_t_array_single_right, u_t_array_single
     fig.add_hline(y=0.4, line_width=0.4, line_dash='dash', line_color='black')
     fig.add_hline(y=0.2, line_width=0.4, line_dash='dash', line_color='black')
     fig.update_layout(title_text=title_text, paper_bgcolor='rgba(255,255,255,1)',
-            plot_bgcolor='rgba(255,255,255,1)')
+            plot_bgcolor='rgba(255,255,255,1)', font=dict(size=18))
 #    fig.update_xaxes(showline=True, linewidth=2, linecolor='black',
 #            title_text='Total uncertainty', rangemode='tozero', showgrid=True, gridwidth=1, gridcolor='black')
     fig.update_xaxes(showline=True, linewidth=2, linecolor='black',
             title_text='Total uncertainty', rangemode='tozero')
-    fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
-            title_text='Assigned probability', rangemode='tozero')
+    if 'Helpdesk' in title_text:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black', rangemode='tozero')
+    else:
+        fig.update_yaxes(showline=True, linewidth=2, linecolor='black',
+                title_text='Assigned probability', rangemode='tozero')
     fig.add_annotation(x=0.57, y=0.5, text='Binomial<br>Entropy', showarrow=False)
     if number_of_classes == 16:
         fig.add_annotation(x=2.8, y=0.25, text='{}-classes Entropy'.format(number_of_classes), showarrow=False, yshift=10)
@@ -387,4 +396,5 @@ def plot_case(acc_single, input_data, u_t, target_data, vocabulary_plot,
                     #fig.update_traces(opacity=0.6)
                     fig.show(renderer='chromium')
                     fig.write_html('saved_figures/models/case{}-{}-step{}.html'.format(case_chosen, ''.join(title_text.split()), j))
+                    fig.write_image('saved_figures/models/case{}-{}-step{}.svg'.format(case_chosen, ''.join(title_text.split()), j))
                     #breakpoint()

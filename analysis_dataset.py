@@ -17,8 +17,9 @@ try:
     os.remove('datasets.stat')
 except:
     print('created new file stat')
-fig = make_subplots(rows=1, cols=2, shared_yaxes=True)
+#fig = make_subplots(rows=1, cols=2, shared_yaxes=True)
 for dataset in datasets:
+    fig = go.Figure()
     if dataset == 'helpdesk':
         log_csv = pd.read_csv('data/finale.csv' , sep=',')
         # Create the Event Log object as in the library pm4py
@@ -52,7 +53,15 @@ for dataset in datasets:
     data_y = list()
     for variant in variants_perc:
         data_y.append(variant['count'])
-    fig.add_trace(go.Bar(y=data_y[:25], marker=dict(color='blue')), row=1, col=col)
+    #fig.add_trace(go.Bar(y=data_y[:25], marker=dict(color='blue')), row=1, col=col)
+    fig.add_trace(go.Bar(y=data_y[:25], marker=dict(color='blue')))
+    for i in np.arange(500, 3500+500, 500):
+        fig.add_hline(y=i, line_width=0.4, line_dash='dash', line_color='black')
+    fig.update_layout(paper_bgcolor='rgba(255,255,255,1)', plot_bgcolor='rgba(255,255,255,1)', font=dict(size=18))
+    fig.update_xaxes(showline=True, linewidth=2, linecolor='black')
+    fig.update_yaxes(showline=True, linewidth=2, linecolor='black', range=[0, 3600])
+    fig.write_image('saved_figures/datasets/{}_25_variants.svg'.format(dataset))
+    fig.show()
 #    fig.write_html('saved_figures/{}_25_variants.html'.format(dataset))
 #    fig.write_image('saved_figures/{}_25_variants.svg'.format(dataset))
 
@@ -78,6 +87,6 @@ for dataset in datasets:
         file.write('number of traces :{}\n'.format(len(event_log)))
         file.write('percentage of second variant wrt first: {}\n'.format(
             np.round(variants_numerical_count[1]/variants_numerical_count[0], 4)))
-fig.update_layout(showlegend=False)
-fig.write_image('saved_figures/dataset_25_variants.svg')
-fig.show()
+#fig.update_layout(showlegend=False)
+#fig.write_image('saved_figures/dataset_25_variants.svg')
+#fig.show()
