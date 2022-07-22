@@ -1,3 +1,5 @@
 # python cache
 __pycache__/
 __pycache__/**
+# python environment
+.python-version
