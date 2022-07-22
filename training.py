@@ -19,13 +19,12 @@ class ExperimentRunnerTF(ExperimentRunner):
     Implementation of the experiment using the Tensorflow library
     """
     def __init__(self, 
-            dataset: tf.data.Dataset, 
             dataprocessor: DataProcessor,
             model: tfk.Model,
             optimizer: Optional[tfk.optimizer] = None,
             loss_function: tfk.losses.Loss,
             ) -> None:
-        self.dataset = dataset
+        self.dataset = dataprocessor.dataset
         self.dataprocessor = dataprocessor
         self.model = model
         self.optimizer = optimizer
@@ -36,7 +35,7 @@ class ExperimentRunnerTF(ExperimentRunner):
         """ Runs one epoch of the experiment """
 
         for step, batch_data in enumerate(tqdm(self.dataset, desc='Epoch', position=1, leave=False)):
-            input_data, target_data = self.dataprocessor.extract_input_and_target(batch_data)
+            input_data, target_data = self.dataprocessor.get_input_and_target(batch_data)
             logits, loss_value = self._one_step(input_data, target_data)
             experiment.rec_loss(loss_value)
             experiment.rec_accuracy(self.accuracy_function(target_data, logits))
