@@ -1,0 +1,9 @@
+Results of the analysis of overconfident wrong predictions
+
+Percentage of test variants also present in training set: 0.16535
+Percentage of test variants present in training set more than 0.1%: 0.19048
+Percentage of test variants present in training set more than 0.5%: 0.04762
+
+Considering test variants in training test wwith more than 0.5%:
+Percentage of cases with values of feature 'completion_time' in first/last quartile: 0.5
+Mean percentage of values of feature 'impact' of the case with respect to the overall cases belonging to the same variant: 0.03667

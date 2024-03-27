@@ -1,0 +1,10 @@
+---
+num-heads: 6
+feed-forward-dim: 2048
+num-layers: 2
+num-epochs: 1
+patience: 10
+batch-size: 32
+num-ensemble: 2
+features-file: "act_res_art_points_amount_total_amount_day_week_time.params"
+tfds-id: False
