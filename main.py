@@ -47,7 +47,7 @@ def main(dataset_name: str, mode: Mode, model_name: str="", uncertainty_type: st
 
     elif mode == Mode.VISUALIZE:
         model_dir = Path('.') / 'models' / dataset_name / model_name
-        figures_dir = Path('.') / 'saved_figures' / dataset_name 
+        figures_dir = Path('.') / 'figures' / dataset_name 
         features_path = model_dir / 'features.params'
         test_dataprocessor = DataProcessorTF(dataset_name, Stage.TEST, dataset_utils_map)
         test_dataprocessor.get_dataset_utils()

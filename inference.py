@@ -61,7 +61,7 @@ class InferenceTFMonteCarlo:
         self.reliability_diagram = resultsprocessor.get_reliability_diagram_results()
         self.accuracy = resultsprocessor.get_accuracy_results()
         resultsprocessor.write_top_k_accuracy_results(self.model_dir, self.type)
-        resultsprocessor.write_case_selected_numpy(self.model_dir, self.set_type.split("")[0])
+        resultsprocessor.write_case_selected_numpy(self.model_dir, self.set_type.split(" ")[0])
         self.predict_case = resultsprocessor.get_predict_case_results()
 
     def compute_distributions(self, input_data: tf.Tensor) -> tf.Tensor:

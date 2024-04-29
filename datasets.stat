@@ -12,3 +12,17 @@ vocabulary length: 38
 number of variants: 4366
 number of traces :13087
 percentage of second variant wrt first: 0.5459
+--- Bpic2013 ---
+mean variant length: 8.68 +- 7.63
+mean dl: 0.48 +- 0.16
+vocabulary length: 15
+number of variants: 2278
+number of traces :7554
+percentage of second variant wrt first: 0.2996
+--- Road_traffic_fines ---
+mean variant length: 3.73 +- 1.64
+mean dl: 0.48 +- 0.17
+vocabulary length: 13
+number of variants: 231
+number of traces :150370
+percentage of second variant wrt first: 0.821

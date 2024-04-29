@@ -3,9 +3,9 @@ import yaml
 import re
 import numpy as np
 import tensorflow_datasets as tfds
-from helpdesk_utils import helpdesk_utils
-from bpic2012_utils import bpic2012_utils
-from bpic2013_utils import bpic2013_utils
+from utilities.helpdesk import helpdesk_utils
+from utilities.bpic2012 import bpic2012_utils
+from utilities.bpic2013 import bpic2013_utils
 import os
 from pm4py.objects.log.util import interval_lifecycle
 from pm4py.util import constants

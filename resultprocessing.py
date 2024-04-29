@@ -113,7 +113,7 @@ class ResultProcessor:
         variant_perc_dict = {elem[0]: elem[1] for elem in total_selected_variants}
         features_stats = dict()
         features_stats['perc'] = list()
-        var_thres_perc = 0.005
+        var_thres_perc = 0.001
         for variant in total_variants_stats:
             if variant_perc_dict[variant] > var_thres_perc:
                 for feature in total_variants_stats[variant]:
@@ -251,7 +251,7 @@ class ResultProcessor:
             file.write(f"{np.round(self.overconfidence_results['perc_test_gt_001'], 5)}\n")
             file.write("Percentage of test variants present in training set more than 0.5%: ")
             file.write(f"{np.round(self.overconfidence_results['perc_test_gt_005'], 5)}\n\n")
-            file.write("Considering test variants in training test wwith more than 0.5%:\n")
+            file.write("Considering test variants in training test wwith more than 0.1%:\n")
             for feature in self.overconfidence_results['quartile_features']:
                 file.write(f"Percentage of cases with values of feature '{feature}' in first/last quartile: ")
                 file.write(f"{np.round(self.overconfidence_results['quartile_features'][feature], 5)}\n") 
