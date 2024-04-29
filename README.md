@@ -27,10 +27,10 @@ python main.py bpic2012 train
 
 In the visualization mode, other parameters are avaliable:
 
-    - --model-dir: directory where the models are stored [mandatory]. In the directory "*models*", each dataset has its own subdirectory. The models reproducing the chapter results are under the directory "*ensemble_1*"
-    - --uncertainty_type: how the uncertainty is injected in the prediction [optional] -> *ensemble* = ensemble of models, *MC*= Monte Carlo dropout. Default MC.
-    - --predict_case: id of the specific case to be predicted [optional]. Default None.
-    - --overconfidence_analysis: boolean to indicate whether running the analysis on the overconfident cases [optional]. Default False.
+- --model-dir: directory where the models are stored [mandatory]. In the directory "*models*", each dataset has its own subdirectory. The models reproducing the chapter results are under the directory "*ensemble_1*"
+- --uncertainty_type: how the uncertainty is injected in the prediction [optional] -> *ensemble* = ensemble of models, *MC*= Monte Carlo dropout. Default MC.
+- --predict_case: id of the specific case to be predicted [optional]. Default None.
+- --overconfidence_analysis: boolean to indicate whether running the analysis on the overconfident cases [optional]. Default False.
 
 For example, to visualize the results on BPIC 2012 dataset, with stochasticity given by an ensemble of models and overconfident analysis:
 
