@@ -8,10 +8,10 @@ pip install requirements.txt
 ```
  
 Four datasets are available: 
-    - *Business Process Intelligence 2012* -> *bpic2012*
-    - *Business Process Intelligence 2013* -> *bpic2013*
-    - *Helpdesk* -> *helpdesk*
-    - *Road Traffic Fine Management Process* -> *road_traffic_fines* [to be unzipped first since it was too big for github]
+- *Business Process Intelligence 2012* -> *bpic2012*
+- *Business Process Intelligence 2013* -> *bpic2013*
+- *Helpdesk* -> *helpdesk*
+- *Road Traffic Fine Management Process* -> *road_traffic_fines* [to be unzipped first since it was too big for github]
 
 The main function admits two modalities: training and visualization. In both modalities the input must include the dataset required.
 
